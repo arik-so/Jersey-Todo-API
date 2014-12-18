@@ -2,13 +2,14 @@ package com.arik;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Root resource (exposed at "myresource" path)
+ * Root resource (exposed at "/" path)
  */
-@Path("myresource")
+@Path("/")
 public class MyResource {
 
     /**
@@ -18,8 +19,23 @@ public class MyResource {
      * @return String that will be returned as a text/plain response.
      */
     @GET
+    @Path("myresource")
     @Produces(MediaType.TEXT_PLAIN)
     public String getIt() {
         return "Hello, Heroku!";
     }
+
+    @GET
+    @Path("arikresource")
+    @Produces("text/html")
+    public String helloWorld(){
+        return "Arik test";
+    }
+
+    @GET
+    @Path("/users/{username}")
+    public String getUser(@PathParam("username") String username){
+        return "something";
+    }
+
 }
