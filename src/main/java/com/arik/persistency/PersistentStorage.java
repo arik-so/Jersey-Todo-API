@@ -15,7 +15,8 @@ public class PersistentStorage {
 
         final String mongoSoupHost = System.getenv("MONGOSOUP_URL");
         if(mongoSoupHost != null && mongoSoupHost.length() > 0){
-            mongoClient = new MongoClient(mongoSoupHost);
+            MongoClientURI uri = new MongoClientURI(mongoSoupHost);
+            mongoClient = new MongoClient(uri);
         }else{
             mongoClient = new MongoClient("localhost", 27017);
         }

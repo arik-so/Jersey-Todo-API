@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d48052fc-d01f-4759-b241-28227d2c4531" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/main/java/com/arik/persistency/PersistentStorage.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/JerseyTodoAPI.iml" afterPath="$PROJECT_DIR$/JerseyTodoAPI.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/artifacts/JerseyTodoAPI_war_exploded.xml" afterPath="$PROJECT_DIR$/.idea/artifacts/JerseyTodoAPI_war_exploded.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/arik/TodoResource.java" afterPath="$PROJECT_DIR$/src/main/java/com/arik/TodoResource.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/jersey-todo-api.war" afterPath="$PROJECT_DIR$/target/jersey-todo-api.war" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/arik/persistency/PersistentStorage.java" afterPath="$PROJECT_DIR$/src/main/java/com/arik/persistency/PersistentStorage.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.arik.MyResourceTest.xml" afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.arik.MyResourceTest.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/surefire-reports/com.arik.MyResourceTest.txt" afterPath="$PROJECT_DIR$/target/surefire-reports/com.arik.MyResourceTest.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" afterPath="$PROJECT_DIR$/target/maven-archiver/pom.properties" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="JerseyTodoAPI.iws" />
@@ -77,9 +77,8 @@
         <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/TodoResource.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0" vertical-offset="43" max-vertical-offset="930">
-              <caret line="32" column="47" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
+              <caret line="13" column="37" selection-start-line="13" selection-start-column="37" selection-end-line="13" selection-end-column="37" />
               <folding>
-                <element signature="imports" expanded="true" />
                 <element signature="e#550#551#0" expanded="true" />
                 <element signature="e#592#593#0" expanded="true" />
                 <element signature="e#688#689#0" expanded="true" />
@@ -105,8 +104,8 @@
       <file leaf-file-name="PersistentStorage.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/persistency/PersistentStorage.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.47342193" vertical-offset="0" max-vertical-offset="602">
-              <caret line="19" column="17" selection-start-line="19" selection-start-column="17" selection-end-line="19" selection-end-column="17" />
+            <state vertical-scroll-proportion="0.44850498" vertical-offset="0" max-vertical-offset="602">
+              <caret line="18" column="47" selection-start-line="18" selection-start-column="47" selection-end-line="18" selection-end-column="47" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -118,6 +117,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <push-targets>
+      <push-target-info repo="$PROJECT_DIR$" source="master" target-remote="heroku" target-branch="master" />
+    </push-targets>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -884,7 +886,7 @@
       <option name="number" value="Default" />
       <updated>1418907177431</updated>
       <workItem from="1418907181418" duration="2733000" />
-      <workItem from="1418912473138" duration="5985000" />
+      <workItem from="1418912473138" duration="6392000" />
     </task>
     <task id="LOCAL-00001" summary="minor experimentation">
       <created>1418912560016</created>
@@ -904,11 +906,17 @@
       <option name="project" value="LOCAL" />
       <updated>1418916060228</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="configured MongoDB. Now should create collections (in theory)">
+      <created>1418918653855</created>
+      <option name="number" value="00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1418918653855</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="8718000" />
+    <option name="totallyTimeSpent" value="9125000" />
   </component>
   <component name="TodoView" selected-index="0">
     <todo-panel id="selected-file">
@@ -986,7 +994,8 @@
     <MESSAGE value="minor experimentation" />
     <MESSAGE value="now not caring about ./.idea/" />
     <MESSAGE value="configured Twilio, and added unit test for correctly set environment variable" />
-    <option name="LAST_COMMIT_MESSAGE" value="configured Twilio, and added unit test for correctly set environment variable" />
+    <MESSAGE value="configured MongoDB. Now should create collections (in theory)" />
+    <option name="LAST_COMMIT_MESSAGE" value="configured MongoDB. Now should create collections (in theory)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1100,36 +1109,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/MyResource.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="585">
-          <caret line="7" column="0" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
-          <folding>
-            <element signature="e#836#837#0" expanded="true" />
-            <element signature="e#887#888#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="568" max-vertical-offset="1905">
           <caret line="61" column="17" selection-start-line="61" selection-start-column="17" selection-end-line="61" selection-end-column="17" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/TodoResource.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="43" max-vertical-offset="930">
-          <caret line="32" column="47" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#550#551#0" expanded="true" />
-            <element signature="e#592#593#0" expanded="true" />
-            <element signature="e#688#689#0" expanded="true" />
-            <element signature="e#761#762#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1144,10 +1128,34 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/MyResource.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="585">
+          <caret line="7" column="0" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+          <folding>
+            <element signature="e#836#837#0" expanded="true" />
+            <element signature="e#887#888#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/TodoResource.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="43" max-vertical-offset="930">
+          <caret line="13" column="37" selection-start-line="13" selection-start-column="37" selection-end-line="13" selection-end-column="37" />
+          <folding>
+            <element signature="e#550#551#0" expanded="true" />
+            <element signature="e#592#593#0" expanded="true" />
+            <element signature="e#688#689#0" expanded="true" />
+            <element signature="e#761#762#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/arik/persistency/PersistentStorage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.47342193" vertical-offset="0" max-vertical-offset="602">
-          <caret line="19" column="17" selection-start-line="19" selection-start-column="17" selection-end-line="19" selection-end-column="17" />
+        <state vertical-scroll-proportion="0.44850498" vertical-offset="0" max-vertical-offset="602">
+          <caret line="18" column="47" selection-start-line="18" selection-start-column="47" selection-end-line="18" selection-end-column="47" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
