@@ -35,7 +35,7 @@ public class MyResource {
     @GET
     @Path("/users/{username}")
     public String getUser(@PathParam("username") String username){
-        return "something";
+        return "the user it got: "+username;
     }
 
 }

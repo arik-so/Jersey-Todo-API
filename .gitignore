@@ -1,5 +1,7 @@
 # Created by .gitignore support plugin (hsz.mobi)
 .idea/
+.env # this is an environment file which contains API keys and such
+
 ### Maven template
 target/
 pom.xml.tag
