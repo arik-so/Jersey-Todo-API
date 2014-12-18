@@ -12,16 +12,18 @@ public class PersistentStorage {
     public static com.mongodb.DB getDatabaseConnection() throws UnknownHostException { // DB is so short and ambiguous
 
         MongoClient mongoClient;
+        String database = "todo-api-db";
 
         final String mongoSoupHost = System.getenv("MONGOSOUP_URL");
         if(mongoSoupHost != null && mongoSoupHost.length() > 0){
-            MongoClientURI uri = new MongoClientURI(mongoSoupHost);
-            mongoClient = new MongoClient(uri);
+            MongoClientURI mongoURI = new MongoClientURI(mongoSoupHost);
+            mongoClient = new MongoClient(mongoURI);
+            database = mongoURI.getDatabase();
         }else{
             mongoClient = new MongoClient("localhost", 27017);
         }
 
-        return mongoClient.getDB("todo-api-db");
+        return mongoClient.getDB(database);
 
     }
 
