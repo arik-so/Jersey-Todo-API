@@ -1,19 +1,13 @@
 package com.arik;
 
 import com.arik.models.TodoItem;
-import com.arik.persistency.PersistentStorage;
-import com.arik.twilio.TwilioConnector;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.ArrayList;
 
 /**
  * Created by arik-so on 12/18/14.
@@ -22,11 +16,28 @@ import java.util.Date;
 public class TodoResource {
 
     @GET
+    @Produces("application/json")
+    public String listTodoItems() throws UnknownHostException {
+
+        JSONArray json = new JSONArray();
+        ArrayList<TodoItem> allTodoItems = TodoItem.fetchAllTodoItems();
+
+        for(TodoItem currentItem : allTodoItems){
+
+            json.add(currentItem.toJSONObject(false));
+
+        }
+
+        return json.toJSONString();
+
+    }
+
+    @GET
     @Path("/{id}")
     @Produces("application/json")
     public String getTodoItem(@PathParam("id") String identifier) throws UnknownHostException {
 
-        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
+        TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
 
         // the item with that ID does no exist
         if(todoItem == null){
@@ -67,7 +78,7 @@ public class TodoResource {
             modificationToken, @FormParam("title") String title, @FormParam("body") String body, @FormParam
             ("done") String isDoneString) throws UnknownHostException {
 
-        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
+        TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
 
         // the item with that ID does no exist
         if(todoItem == null){
@@ -109,7 +120,7 @@ public class TodoResource {
     public void removeTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String
             modificationToken) throws UnknownHostException {
 
-        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
+        TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
 
         // the item with that ID does no exist
         if(todoItem == null){

@@ -8,11 +8,14 @@ import org.json.simple.JSONObject;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 
 /**
  * Created by arik-so on 12/19/14.
  */
 public class TodoItem {
+
+    private static final String DB_TABLE = "tests";
 
     private static SecureRandom secureRandom = new SecureRandom();
 
@@ -42,7 +45,7 @@ public class TodoItem {
     public static TodoItem create() throws UnknownHostException {
 
         DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection("tests");
+        DBCollection table = database.getCollection(DB_TABLE);
 
         String modificationToken = new BigInteger(128, secureRandom).toString(32);
 
@@ -55,14 +58,14 @@ public class TodoItem {
         table.insert(row);
         ObjectId insertionID = (ObjectId)row.get("_id");
 
-        return getTodoItemByID(insertionID.toString());
+        return fetchTodoItemByID(insertionID.toString());
 
     }
 
-    public static TodoItem getTodoItemByID(String identifier) throws UnknownHostException {
+    public static TodoItem fetchTodoItemByID(String identifier) throws UnknownHostException {
 
         DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection("tests");
+        DBCollection table = database.getCollection(DB_TABLE);
 
         BasicDBObject query = new BasicDBObject();
         ObjectId objectID;
@@ -101,10 +104,31 @@ public class TodoItem {
 
     }
 
+    public static ArrayList<TodoItem> fetchAllTodoItems() throws UnknownHostException {
+
+        DB database = PersistentStorage.getDatabaseConnection();
+        DBCollection table = database.getCollection(DB_TABLE);
+
+        ArrayList<TodoItem> allItems = new ArrayList<>();
+
+        DBCursor cursor = table.find();
+        try {
+            while(cursor.hasNext()) {
+                String currentIdentifier = cursor.next().get("_id").toString();
+                allItems.add(fetchTodoItemByID(currentIdentifier));
+            }
+        } finally {
+            cursor.close();
+        }
+
+        return allItems;
+
+    }
+
     public void save() throws UnknownHostException {
 
         DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection("tests");
+        DBCollection table = database.getCollection(DB_TABLE);
 
         BasicDBObject query = new BasicDBObject();
         query.append("_id", new ObjectId(identifier));
@@ -116,7 +140,7 @@ public class TodoItem {
     public void remove() throws UnknownHostException {
 
         DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection("tests");
+        DBCollection table = database.getCollection(DB_TABLE);
 
         BasicDBObject query = new BasicDBObject();
         query.append("_id", new ObjectId(identifier));
