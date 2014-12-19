@@ -17,14 +17,15 @@ public class TwilioConnector {
     public static final String ACCOUNT_SID = "AC2225010f929f77a0d5e779e5818b3a07";
     public static final String ACCOUNT_AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
 
-    public void sendSMS() throws TwilioRestException {
+    public static void sendSMS(String recipientPhoneNumber, String smsMessage) throws TwilioRestException {
 
         TwilioRestClient client = new TwilioRestClient(ACCOUNT_SID, ACCOUNT_AUTH_TOKEN);
 
         // Build the parameters
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("To", "+16509990295"));
         params.add(new BasicNameValuePair("From", "+16506207470"));
+        params.add(new BasicNameValuePair("To", recipientPhoneNumber));
+        params.add(new BasicNameValuePair("Body", smsMessage));
 
         MessageFactory messageFactory = client.getAccount().getMessageFactory();
         Message message = messageFactory.create(params);
