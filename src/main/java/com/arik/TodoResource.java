@@ -1,17 +1,18 @@
 package com.arik;
 
+import com.arik.models.TodoItem;
 import com.arik.persistency.PersistentStorage;
 import com.arik.twilio.TwilioConnector;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import org.json.simple.JSONObject;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -20,36 +21,107 @@ import java.util.Date;
 @Path("/todo")
 public class TodoResource {
 
-    @POST
-    @Produces("text/plain")
-    public String createTodoItem(){
-        return "Created Todo item";
-    }
-
     @GET
-    @Path("/twilinfo")
-    @Produces("text/plain")
-    public String getTwilioInfo(){
-        return "Twilio info: "+TwilioConnector.ACCOUNT_AUTH_TOKEN;
-    }
-
-    @GET
-    @Path("/dbtest")
+    @Path("/{id}")
     @Produces("application/json")
-    public String testDB() throws UnknownHostException {
+    public String getTodoItem(@PathParam("id") String identifier) throws UnknownHostException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
+        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
 
-        DBCollection table = database.getCollection("tests");
+        // the item with that ID does no exist
+        if(todoItem == null){
+            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+        }
 
-        BasicDBObject row = new BasicDBObject();
-        row.append("name", "Test Entry");
-        row.append("timestamp", new Date());
+        JSONObject json = todoItem.toJSONObject(false);
+        return json.toJSONString();
 
-        table.insert(row);
+    }
 
-        DBObject foundRow = table.findOne();
-        return foundRow.toString();
+    @POST
+    @Produces("application/json")
+    public String createTodoItem(@FormParam("title") String title, @FormParam("body") String body) throws
+            UnknownHostException {
+
+        if(title == null || title.length() < 1){
+            throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity("The title must not be empty").build());
+        }
+
+        TodoItem todoItem = TodoItem.create();
+
+        todoItem.setTitle(title);
+        todoItem.setBody(body);
+        todoItem.setDone(false);
+
+        todoItem.save();
+
+        JSONObject json = todoItem.toJSONObject(true);
+        return json.toString();
+
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Produces("application/json")
+    public String updateTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String
+            modificationToken, @FormParam("title") String title, @FormParam("body") String body, @FormParam
+            ("done") String isDoneString) throws UnknownHostException {
+
+        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
+
+        // the item with that ID does no exist
+        if(todoItem == null){
+            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+        }
+
+        if(!todoItem.getModificationToken().equals(modificationToken)){
+            throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).entity("Invalid " +
+                    "modification token").build());
+        }
+
+        if(title != null){
+            todoItem.setTitle(title);
+        }
+
+        if(body != null){
+            todoItem.setBody(body);
+        }
+
+        if(isDoneString != null){
+
+            if(isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")){
+                todoItem.setDone(true);
+            }else if(isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")){
+                todoItem.setDone(false);
+            }
+
+        }
+
+        todoItem.save();
+
+        JSONObject json = todoItem.toJSONObject(false);
+        return json.toString();
+
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public void removeTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String
+            modificationToken) throws UnknownHostException {
+
+        TodoItem todoItem = TodoItem.getTodoItemByID(identifier);
+
+        // the item with that ID does no exist
+        if(todoItem == null){
+            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+        }
+
+        if(!todoItem.getModificationToken().equals(modificationToken)){
+            throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).entity("Invalid " +
+                    "modification token").build());
+        }
+
+        todoItem.remove();
 
     }
 

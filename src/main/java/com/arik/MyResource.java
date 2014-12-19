@@ -1,9 +1,6 @@
 package com.arik;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -34,8 +31,8 @@ public class MyResource {
 
     @GET
     @Path("/users/{username}")
-    public String getUser(@PathParam("username") String username){
-        return "the user it got: "+username;
+    public String getUser(@PathParam("username") String username, @QueryParam("search") String search){
+        return "the user it got: "+username+", but searched for: "+search;
     }
 
 }
