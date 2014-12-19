@@ -137,7 +137,7 @@ public class TodoResource {
     }
 
     @GET
-    @Path("/{query}")
+    @Path("/search/{query}")
     public String searchTodoItems(@PathParam("query") String queryString){
 
         throw new NotFoundException("We're sorry");
