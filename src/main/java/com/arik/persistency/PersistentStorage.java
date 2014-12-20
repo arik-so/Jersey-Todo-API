@@ -9,7 +9,6 @@ import java.net.UnknownHostException;
  */
 public class PersistentStorage {
 
-    private static boolean isConnectionEstablished = false;
     private static com.mongodb.DB databaseConnection;
 
     /**
@@ -20,7 +19,7 @@ public class PersistentStorage {
     public synchronized static com.mongodb.DB getDatabaseConnection() throws UnknownHostException { // DB is so short and
     // ambiguous
 
-        if(isConnectionEstablished){
+        if(databaseConnection != null){
             return databaseConnection;
         }
 
@@ -47,8 +46,6 @@ public class PersistentStorage {
         }
 
         databaseConnection = mongoClient.getDB(database);
-        isConnectionEstablished = true;
-
         return databaseConnection;
 
     }

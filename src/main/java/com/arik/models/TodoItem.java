@@ -1,7 +1,14 @@
 package com.arik.models;
 
 import com.arik.persistency.PersistentStorage;
+import com.arik.search.SearchlyHelper;
 import com.mongodb.*;
+import io.searchbox.annotations.JestId;
+import io.searchbox.client.JestClient;
+import io.searchbox.client.JestResult;
+import io.searchbox.core.*;
+import io.searchbox.indices.CreateIndex;
+import io.searchbox.indices.IndicesExists;
 import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 
@@ -16,12 +23,12 @@ import java.util.ArrayList;
 public class TodoItem {
 
     private static final String DB_TABLE = "tests";
+    private static final String JEST_INDEX = "todo-items";
+    private static final String JEST_TYPE = "todo-item";
 
     private static SecureRandom secureRandom = new SecureRandom();
 
-    /**
-     *
-     */
+    @JestId
     private String identifier;
 
     private String title;
@@ -58,7 +65,20 @@ public class TodoItem {
         table.insert(row);
         ObjectId insertionID = (ObjectId)row.get("_id");
 
-        return fetchTodoItemByID(insertionID.toString());
+        TodoItem todoItem = fetchTodoItemByID(insertionID.toString());
+
+        // create the search index
+        JestClient jestClient = SearchlyHelper.getJestClient();
+        try {
+
+            Index index = new Index.Builder(todoItem).index(JEST_INDEX).type(JEST_TYPE).build();
+            jestClient.execute(index);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return todoItem;
 
     }
 
@@ -135,6 +155,19 @@ public class TodoItem {
 
         table.update(query, this.row);
 
+
+        // update the search index
+        JestClient jestClient = SearchlyHelper.getJestClient();
+        try {
+
+            Update update = new Update.Builder(this).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
+            jestClient.execute(update);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     public void remove() throws UnknownHostException {
@@ -146,6 +179,18 @@ public class TodoItem {
         query.append("_id", new ObjectId(identifier));
 
         table.remove(query);
+
+
+        // remove the search index
+        JestClient jestClient = SearchlyHelper.getJestClient();
+        try {
+
+            Delete delete = new Delete.Builder(this.getID()).index(JEST_INDEX).type(JEST_TYPE).build();
+            jestClient.execute(delete);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
