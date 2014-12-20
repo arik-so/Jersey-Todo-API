@@ -25,14 +25,14 @@ public class MyResource {
     @GET
     @Path("arikresource")
     @Produces("text/html")
-    public String helloWorld(){
+    public String helloWorld() {
         return "Arik test";
     }
 
     @GET
     @Path("/users/{username}")
-    public String getUser(@PathParam("username") String username, @QueryParam("search") String search){
-        return "the user it got: "+username+", but searched for: "+search;
+    public String getUser(@PathParam("username") String username, @QueryParam("search") String search) {
+        return "the user it got: " + username + ", but searched for: " + search;
     }
 
 }

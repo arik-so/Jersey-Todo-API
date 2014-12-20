@@ -11,19 +11,16 @@ public class SearchlyHelper {
 
     private static JestClient jestClient;
 
-    public static JestClient getJestClient(){
+    public static synchronized JestClient getJestClient() {
 
-        if(jestClient != null){
+        if (jestClient != null) {
             return jestClient;
         }
 
         String connectionURL = System.getenv("SEARCHBOX_URL");
 
         JestClientFactory factory = new JestClientFactory();
-        factory.setHttpClientConfig(new HttpClientConfig
-                .Builder(connectionURL)
-                .multiThreaded(true)
-                .build());
+        factory.setHttpClientConfig(new HttpClientConfig.Builder(connectionURL).multiThreaded(true).build());
 
         jestClient = factory.getObject();
         return jestClient;

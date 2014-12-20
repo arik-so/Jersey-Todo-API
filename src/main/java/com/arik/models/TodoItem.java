@@ -22,10 +22,9 @@ import java.util.ArrayList;
  */
 public class TodoItem {
 
+    public static final String JEST_INDEX = "todo-items";
+    public static final String JEST_TYPE = "todo-item";
     private static final String DB_TABLE = "tests";
-    private static final String JEST_INDEX = "todo-items";
-    private static final String JEST_TYPE = "todo-item";
-
     private static SecureRandom secureRandom = new SecureRandom();
 
     @JestId
@@ -47,9 +46,10 @@ public class TodoItem {
     /**
      * In order to avoid confusion, we do not allow external calls to the constructor
      */
-    private TodoItem(){}
+    private TodoItem() {
+    }
 
-    public static TodoItem create() throws UnknownHostException {
+    public static TodoItem create() throws Exception {
 
         DB database = PersistentStorage.getDatabaseConnection();
         DBCollection table = database.getCollection(DB_TABLE);
@@ -63,19 +63,23 @@ public class TodoItem {
         row.append("modification_token", modificationToken);
 
         table.insert(row);
-        ObjectId insertionID = (ObjectId)row.get("_id");
+        ObjectId insertionID = (ObjectId) row.get("_id");
 
         TodoItem todoItem = fetchTodoItemByID(insertionID.toString());
 
         // create the search index
-        JestClient jestClient = SearchlyHelper.getJestClient();
         try {
 
+            JestClient jestClient = SearchlyHelper.getJestClient();
             Index index = new Index.Builder(todoItem).index(JEST_INDEX).type(JEST_TYPE).build();
             jestClient.execute(index);
 
         } catch (Exception e) {
-            e.printStackTrace();
+
+            // if we have failed to index this item, it's unsearchable, and thus, useless
+            todoItem.remove();
+            throw e;
+
         }
 
         return todoItem;
@@ -107,7 +111,7 @@ public class TodoItem {
             return null;
         }
 
-        if(row == null){
+        if (row == null) {
             return null;
         }
 
@@ -132,8 +136,9 @@ public class TodoItem {
         ArrayList<TodoItem> allItems = new ArrayList<>();
 
         DBCursor cursor = table.find();
+
         try {
-            while(cursor.hasNext()) {
+            while (cursor.hasNext()) {
                 String currentIdentifier = cursor.next().get("_id").toString();
                 allItems.add(fetchTodoItemByID(currentIdentifier));
             }
@@ -145,7 +150,7 @@ public class TodoItem {
 
     }
 
-    public void save() throws UnknownHostException {
+    public void save() throws Exception {
 
         DB database = PersistentStorage.getDatabaseConnection();
         DBCollection table = database.getCollection(DB_TABLE);
@@ -158,15 +163,9 @@ public class TodoItem {
 
         // update the search index
         JestClient jestClient = SearchlyHelper.getJestClient();
-        try {
+        Update update = new Update.Builder(this).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
 
-            Update update = new Update.Builder(this).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
-            jestClient.execute(update);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        jestClient.execute(update);
 
     }
 
@@ -182,19 +181,18 @@ public class TodoItem {
 
 
         // remove the search index
-        JestClient jestClient = SearchlyHelper.getJestClient();
         try {
-
+            JestClient jestClient = SearchlyHelper.getJestClient();
             Delete delete = new Delete.Builder(this.getID()).index(JEST_INDEX).type(JEST_TYPE).build();
-            jestClient.execute(delete);
 
+            jestClient.execute(delete);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    public JSONObject toJSONObject(boolean includeModificationToken){
+    public JSONObject toJSONObject(boolean includeModificationToken) {
 
         JSONObject json = new JSONObject();
         json.put("id", this.getID());
@@ -202,7 +200,7 @@ public class TodoItem {
         json.put("body", this.getBody());
         json.put("done", this.isDone());
 
-        if(includeModificationToken){
+        if (includeModificationToken) {
             json.put("modification_token", this.getModificationToken());
         }
 
@@ -218,21 +216,13 @@ public class TodoItem {
         return title;
     }
 
-    public String getBody() {
-        return body;
-    }
-
-    public boolean isDone() {
-        return isDone;
-    }
-
-    public String getModificationToken() {
-        return modificationToken;
-    }
-
     public void setTitle(String title) {
         this.title = title;
         this.row.put("title", title);
+    }
+
+    public String getBody() {
+        return body;
     }
 
     public void setBody(String body) {
@@ -240,8 +230,16 @@ public class TodoItem {
         this.row.put("body", body);
     }
 
+    public boolean isDone() {
+        return isDone;
+    }
+
     public void setDone(boolean isDone) {
         this.isDone = isDone;
         this.row.put("is_done", isDone);
+    }
+
+    public String getModificationToken() {
+        return modificationToken;
     }
 }

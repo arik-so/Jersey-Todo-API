@@ -13,13 +13,14 @@ public class PersistentStorage {
 
     /**
      * A method to establish (if necessary) a connection to the database.
+     *
      * @return An instance of a writable MongoDB database wrapper object
      * @throws UnknownHostException Thrown if no MongoDB server is available
      */
-    public synchronized static com.mongodb.DB getDatabaseConnection() throws UnknownHostException { // DB is so short and
-    // ambiguous
+    public static synchronized com.mongodb.DB getDatabaseConnection() throws UnknownHostException { // DB is so short and
+        // ambiguous
 
-        if(databaseConnection != null){
+        if (databaseConnection != null) {
             return databaseConnection;
         }
 
@@ -29,7 +30,7 @@ public class PersistentStorage {
         final String mongoSoupHost = System.getenv("MONGOSOUP_URL");
 
         // if the environment tells us the mongosoup DB url, we use that one. Otherwise, we revert/default to local
-        if(mongoSoupHost != null && mongoSoupHost.length() > 0){
+        if (mongoSoupHost != null && mongoSoupHost.length() > 0) {
 
             MongoClientURI mongoURI = new MongoClientURI(mongoSoupHost);
             mongoClient = new MongoClient(mongoURI);
@@ -37,7 +38,7 @@ public class PersistentStorage {
             // the mongosoup instance only permits one database, which is given in the environment config
             database = mongoURI.getDatabase();
 
-        }else{
+        } else {
 
             // just the default local configuration and an appropriate database name
             mongoClient = new MongoClient("localhost", 27017);
