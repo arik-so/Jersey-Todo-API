@@ -60,6 +60,11 @@ public class TodoItem {
     private TodoItem() {
     }
 
+    /**
+     * Create a new to-do item by storing it in a database and creating an index referencing it
+     * @return An instance of the new item
+     * @throws Exception Thrown if there was an issue with MongoDB or with Searchly
+     */
     public static TodoItem create() throws Exception {
 
         DB database = PersistentStorage.getDatabaseConnection();
@@ -99,6 +104,12 @@ public class TodoItem {
 
     }
 
+    /**
+     * Get an existing to-do item by its ID
+     * @param identifier the ID of the to-do item
+     * @return An instance of the item
+     * @throws UnknownHostException Thrown if there was an issue with MongoDB
+     */
     public static TodoItem fetchTodoItemByID(String identifier) throws UnknownHostException {
 
         DB database = PersistentStorage.getDatabaseConnection();
