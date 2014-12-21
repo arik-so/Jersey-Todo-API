@@ -1,9 +1,25 @@
 {
-  "multi_match": {
-    "query": "{QUERY_STRING}",
-    "fields": [
-      "title^3",
-      "body"
+  "hits": {
+    "total": 1,
+    "max_score": 1.0,
+    "hits": [
+      {
+        "_index": "todo-items",
+        "_type": "todo-item",
+        "_id": "5496de5fd4c6d2992e916299",
+        "_score": 1.0,
+        "_source": {
+          "title": "Hello World (modified)",
+          "body": "Buy some bye byes"
+        }
+      }
     ]
-  }
+  },
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "timed_out": false,
+  "took": 0
 }

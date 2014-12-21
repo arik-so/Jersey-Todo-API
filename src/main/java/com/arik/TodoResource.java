@@ -10,6 +10,7 @@ import io.searchbox.core.SearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -261,8 +262,23 @@ public class TodoResource {
         System.out.println("Search: " + elasticSearchQuery);
         System.out.println("Search error: " + result.getErrorMessage());
 
-        JSONArray json = new JSONArray();
-        return result.getJsonString();
+        JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
+        JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
+        JSONArray foundItems = (JSONArray) outerHits.get("hits");
+        
+        JSONArray output = new JSONArray();
+        
+        for(Object currentFindObject : foundItems){
+            
+            JSONObject currentFind = (JSONObject) currentFindObject;
+            String currentIdentifier = (String) currentFind.get("_id");
+            
+            TodoItem currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
+            output.add(currentItem.toJSONObject(false));
+            
+        }
+        
+        return output.toJSONString();
 
     }
 
