@@ -7,7 +7,6 @@ import sun.misc.BASE64Encoder;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 
@@ -88,11 +87,8 @@ public class TwilioConnector {
             }
             responseReader.close();
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println(e.getMessage());
         } finally {
 
             if (connection != null) {
