@@ -1,9 +1,8 @@
 # Jersey Todo API
 
-Usage
-------------
+## Usage
 
-> Get all todo items
+### Get all todo items
 
 ```
 curl http://localhost:5000/todo
