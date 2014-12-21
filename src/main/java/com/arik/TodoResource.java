@@ -105,10 +105,18 @@ public class TodoResource {
 
         String successMessage = "You have subscribed to the changes of Todo item " + identifier + ".";
 
+        System.out.println("Would be success: "+successMessage);
+        
         // first of all, let's send a test SMS
+        
         try {
+            
             TwilioConnector.sendSMS(phoneNumber, successMessage);
+            
         } catch (TwilioRestException e) {
+            
+            e.printStackTrace();
+            
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).
                     entity("There was an issue with Twilio: " + e.getErrorMessage()).build());
         }

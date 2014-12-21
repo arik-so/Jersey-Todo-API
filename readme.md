@@ -84,5 +84,14 @@ The response is the new JSON representation of the todo item:
 If you wish to be informed via SMS whenever a todo item is modified, call the subscribe method:
 
 ```shell
-curl http://localhost:5000/todo/5496de5fd4c6d2992e916299/subscribe/+16501234567
+curl http://localhost:5000/todo/5496de5fd4c6d2992e916299/subscribe/+16509991234
 ```
+
+Due to the fact that I am using a trial Twilio account, you will most likely get a response status code 500 and the
+following error message:
+
+> There was an issue with Twilio: The number +16509991234 is unverified. Trial accounts cannot send messages to 
+unverified numbers; verify +16509991234 at twilio.com/user/account/phone-numbers/verified, or purchase a Twilio number 
+to send messages to unverified numbers.
+
+Verifying the number with Twilio would be the easiest remedy.

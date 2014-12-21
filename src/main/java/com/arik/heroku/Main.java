@@ -2,6 +2,8 @@ package com.arik.heroku;
 
 import com.arik.models.TodoItem;
 import com.arik.search.SearchlyHelper;
+import com.arik.twilio.TwilioConnector;
+import com.twilio.sdk.TwilioRestException;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
@@ -28,6 +30,14 @@ public class Main {
         if (webPort == null || webPort.isEmpty()) {
             webPort = "8080";
         }
+
+
+        try {
+            TwilioConnector.sendSMS("+16501234567", "test");
+        } catch (TwilioRestException e) {
+            e.printStackTrace();
+        }
+
 
         final Server server = new Server(Integer.valueOf(webPort));
         final WebAppContext root = new WebAppContext();
