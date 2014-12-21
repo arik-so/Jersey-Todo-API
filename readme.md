@@ -4,7 +4,7 @@
 
 ### Create a new todo item
 
-```
+```Shell
 curl --data "title=Hello+World&body=Buy+some+bye+byes" http://localhost:5000/todo
 ```
 
