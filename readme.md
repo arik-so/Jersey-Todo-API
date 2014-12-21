@@ -63,7 +63,8 @@ Now, the response is no longer a JSON dictionary, but a JSON array containing al
 
 ### Modify an existing todo item
 
-This method is used in order to change the title, the body, or the done status of an item. The values that
+This method is used in order to change the title, the body, or the done status of an item. The values that are to 
+remain unchanged need not be specified at all.
 
 ```shell
 curl -X PUT --data "title=Hello+World+(modified)&done=true&modification_token=6cnvgcejcvh60nlebvru6vc9ev" https://jersey-todo-api.herokuapp.com/5496de5fd4c6d2992e916299
