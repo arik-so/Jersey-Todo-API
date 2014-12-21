@@ -70,7 +70,7 @@ curl -X PUT --data "title=Hello+World+(modified)&done=true&modification_token=6c
 ```
 
 The response is the new JSON representation of the todo item:
-```
+```json
 {
 	"id":"5496de5fd4c6d2992e916299",
 	"title":"Hello World (modified)",
