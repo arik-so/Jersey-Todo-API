@@ -4,7 +4,7 @@
 
 ### Create a new todo item
 
-```Shell
+```shell
 curl --data "title=Hello+World&body=Buy+some+bye+byes" http://localhost:5000/todo
 ```
 
@@ -25,7 +25,7 @@ All new todo items are not done by default. They can be set to done later on.
 
 ### Get an existing todo item
 
-```
+```shell
 curl http://localhost:5000/todo/5496de5fd4c6d2992e916299
 ```
 
@@ -44,7 +44,7 @@ Note that the modification token is not included.
 
 ### Get all todo items
 
-```
+```shell
 curl http://localhost:5000/todo
 ```
 
@@ -65,7 +65,7 @@ Now, the response is no longer a JSON dictionary, but a JSON array containing al
 
 This method is used in order to change the title, the body, or the done status of an item. The values that
 
-```
+```shell
 curl -X PUT --data "title=Hello+World+(modified)&done=true&modification_token=6cnvgcejcvh60nlebvru6vc9ev" http://localhost:5000/todo/5496de5fd4c6d2992e916299
 ```
 
