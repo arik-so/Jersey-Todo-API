@@ -119,4 +119,12 @@ objects are shown and that they are ordered by decreasing relevance.
 ]
 ```
 
+### Remove a todo item
+
+This request is formatted pretty much like the update request, with the sole difference that the modification token
+is provided as a query parameter rather than within the request body.
+
+```shell
+curl -X DELETE http://localhost:5000/todo/5496de5fd4c6d2992e916299?modification_token=6cnvgcejcvh60nlebvru6vc9ev
+```
 
