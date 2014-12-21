@@ -19,14 +19,7 @@ public class Main {
             webPort = "8080";
         }
 
-
-        try {
-            TwilioConnector.sendSMS("+16501234567", "test");
-        } catch (TwilioRestException e) {
-            e.printStackTrace();
-        }
-
-
+        
         final Server server = new Server(Integer.valueOf(webPort));
         final WebAppContext root = new WebAppContext();
 
