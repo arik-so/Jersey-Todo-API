@@ -8,8 +8,7 @@
 curl http://localhost:5000/todo
 ```
 
-Create a new todo item
--------
+### Create a new todo item
 
 ```
 curl --data "title=Hello+World&body=Buy+some+bye+byes" http://localhost:5000/todo
@@ -28,4 +27,6 @@ It will return a response of the following type:
 ```
 
 The modification token is only ever shown after the object creation. It is necessary in order to modify or delete items.
+
+### Modify an existing todo item
 
