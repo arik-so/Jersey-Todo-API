@@ -10,7 +10,7 @@ curl http://localhost:5000/todo
 ```
 
 Create a new todo item
------------
+-------
 
 ```
 curl --data "title=Hello+World&body=Buy+some+bye+byes" http://localhost:5000/todo
