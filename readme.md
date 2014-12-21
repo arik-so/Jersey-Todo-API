@@ -21,7 +21,7 @@ It will return a response of the following type:
 ```
 
 The modification token is only ever shown after the object creation. It is necessary in order to modify or delete items. 
-All new todo items are not done by default. They can be set to done later on.
+All new todo items are not done by default. [They can be set to done later on](#modify-an-existing-todo-item).
 
 ### Get an existing todo item
 
