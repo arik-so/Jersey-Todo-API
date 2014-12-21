@@ -6,7 +6,7 @@ import javax.ws.rs.core.MediaType;
 /**
  * Root resource (exposed at "/" path)
  */
-@Path("/")
+@Path("/ariktest")
 public class MyResource {
 
     /**

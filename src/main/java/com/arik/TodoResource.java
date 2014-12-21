@@ -23,7 +23,7 @@ import java.util.ArrayList;
 /**
  * Created by arik-so on 12/18/14.
  */
-@Path("/todo")
+@Path("/") // we operate right at the root path
 public class TodoResource {
 
     private static final String QUERY_PRESET_PATH = "todo-query-preset.json";
@@ -261,7 +261,9 @@ public class TodoResource {
 
         System.out.println("Search: " + elasticSearchQuery);
         System.out.println("Search error: " + result.getErrorMessage());
-
+        System.out.println("Result: " + result.getJsonString());
+        
+        
         JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
         JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
         JSONArray foundItems = (JSONArray) outerHits.get("hits");
@@ -274,6 +276,8 @@ public class TodoResource {
             String currentIdentifier = (String) currentFind.get("_id");
             
             TodoItem currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
+            if(currentItem == null){ continue; }
+            
             output.add(currentItem.toJSONObject(false));
             
         }
