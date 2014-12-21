@@ -20,7 +20,8 @@ It will return a response of the following type:
 }
 ```
 
-The modification token is only ever shown after the object creation. It is necessary in order to modify or delete items.
+The modification token is only ever shown after the object creation. It is necessary in order to modify or delete items. 
+All new todo items are not done by default. They can be set to done later on.
 
 ### Get an existing todo item
 
@@ -62,8 +63,10 @@ Now, the response is no longer a JSON dictionary, but a JSON array containing al
 
 ### Modify an existing todo item
 
+This method is used in order to change the title, the body, or the done status of an item. The values that
+
 ```
-curl -X PUT --data "title=Hello+World+(modified)&modification_token=6cnvgcejcvh60nlebvru6vc9ev" http://localhost:5000/todo/5496de5fd4c6d2992e916299
+curl -X PUT --data "title=Hello+World+(modified)&done=true&modification_token=6cnvgcejcvh60nlebvru6vc9ev" http://localhost:5000/todo/5496de5fd4c6d2992e916299
 ```
 
 The response is the new JSON representation of the todo item:
@@ -72,7 +75,7 @@ The response is the new JSON representation of the todo item:
 	"id":"5496de5fd4c6d2992e916299",
 	"title":"Hello World (modified)",
 	"body":"Buy some bye byes",
-	"done":false
+	"done":true
 }
 ```
 
