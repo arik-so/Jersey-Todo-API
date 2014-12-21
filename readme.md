@@ -79,9 +79,9 @@ The response is the new JSON representation of the todo item:
 }
 ```
 
-### Subscribe to the changes of a todo item
+### Subscribe to done status changes of a todo item
 
-If you wish to be informed via SMS whenever a todo item is modified, call the subscribe method:
+If you wish to be informed via SMS whenever a todo item is set to done (or not done), call the subscribe method:
 
 ```shell
 curl http://localhost:5000/todo/5496de5fd4c6d2992e916299/subscribe/+16509991234
