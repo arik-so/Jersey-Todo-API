@@ -172,7 +172,7 @@ public class TodoResource {
 
     @DELETE
     @Path("/{id}")
-    public void removeTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String modificationToken) throws UnknownHostException {
+    public void removeTodoItem(@PathParam("id") String identifier, @QueryParam("modification_token") String modificationToken) throws UnknownHostException {
 
         TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
 
@@ -195,23 +195,22 @@ public class TodoResource {
 
         URL queryPresetURL = SearchlyHelper.class.getClassLoader().getResource("todo-query-preset.json");
         String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
-
         String elasticSearchQuery = StringUtils.replace(queryPreset, "{QUERY_STRING}", queryString);
+
+        System.out.println(elasticSearchQuery);
+
         Search search = new Search.Builder(elasticSearchQuery).addIndex(TodoItem.JEST_INDEX).addType(TodoItem.JEST_TYPE).build();
 
         JestClient client = SearchlyHelper.getJestClient();
         SearchResult result = client.execute(search);
 
+        System.out.println("Search: "+search);
+        System.out.println("Result: "+result);
+        System.out.println("Error: " + result.getErrorMessage());
+        System.out.println("Result path: "+result.getPathToResult());
+
         JSONArray json = new JSONArray();
-        List<TodoItem> foundTodoItems = result.getSourceAsObjectList(TodoItem.class);
-
-        for (TodoItem currentItem : foundTodoItems) {
-
-            json.add(currentItem.toJSONObject(false));
-
-        }
-
-        return json.toJSONString();
+        return result.getJsonString();
 
     }
 

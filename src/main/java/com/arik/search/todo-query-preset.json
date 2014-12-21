@@ -1,9 +1,11 @@
 {
-  "multi_match": {
-    "query": "{QUERY_STRING}",
-    "fields": [
-      "title^3",
-      "body"
-    ]
+  "query" : {
+    "query_string": {
+      "query": "{QUERY_STRING}",
+      "fields": [
+        "title^3",
+        "body"
+      ]
+    }
   }
 }

@@ -5,10 +5,7 @@ import com.arik.search.SearchlyHelper;
 import com.mongodb.*;
 import io.searchbox.annotations.JestId;
 import io.searchbox.client.JestClient;
-import io.searchbox.client.JestResult;
 import io.searchbox.core.*;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.IndicesExists;
 import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 
@@ -16,6 +13,8 @@ import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by arik-so on 12/19/14.
@@ -71,7 +70,7 @@ public class TodoItem {
         try {
 
             JestClient jestClient = SearchlyHelper.getJestClient();
-            Index index = new Index.Builder(todoItem).index(JEST_INDEX).type(JEST_TYPE).build();
+            Index index = new Index.Builder(todoItem.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(todoItem.getID()).build();
             jestClient.execute(index);
 
         } catch (Exception e) {
@@ -160,10 +159,9 @@ public class TodoItem {
 
         table.update(query, this.row);
 
-
         // update the search index
         JestClient jestClient = SearchlyHelper.getJestClient();
-        Update update = new Update.Builder(this).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
+        Index update = new Index.Builder(this.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
 
         jestClient.execute(update);
 
@@ -205,6 +203,16 @@ public class TodoItem {
         }
 
         return json;
+
+    }
+
+    private Map<String, String> toElasticSearchMap(){
+
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("title", this.getTitle());
+        map.put("body", this.getBody());
+
+        return map;
 
     }
 
