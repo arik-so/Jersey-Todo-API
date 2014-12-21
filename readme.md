@@ -105,16 +105,16 @@ curl http://localhost:5000/todo/search/hell*
 ```
 
 The titles and bodies of all existing todo items will be searched. The title matches are prioritized as being thrice as
-relevant as body matches. The response looks just like the response for all object, with the difference that not all
+relevant as body matches. The response looks just like the response for all objects, with the difference that not all
 objects are shown and that they are ordered by decreasing relevance.
 
 ```javascript
 [
 	{
-		"id":"5496de5fd4c6d2992e916299",
-		"title":"Hello World (modified)",
-		"body":"Buy some bye byes",
-		"done":true
+		"id" : "5496de5fd4c6d2992e916299",
+		"title" : "Hello World (modified)",
+		"body" : "Buy some bye byes",
+		"done" : true
 	}
 ]
 ```
