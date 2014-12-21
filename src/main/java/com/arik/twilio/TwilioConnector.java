@@ -21,22 +21,6 @@ public class TwilioConnector {
     private static final String ACCOUNT_AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
     private static final String SENDER_NUMBER = "%2B16506207470";
 
-    /*private static TwilioRestClient twilioClient = new TwilioRestClient(ACCOUNT_SID, ACCOUNT_AUTH_TOKEN);;
-
-    public static void sendSMS(String recipientPhoneNumber, String smsMessage) throws TwilioRestException {
-
-        // Build the parameters
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("From", "+16506207470"));
-        params.add(new BasicNameValuePair("To", recipientPhoneNumber));
-        params.add(new BasicNameValuePair("Body", smsMessage));
-
-        MessageFactory messageFactory = twilioClient.getAccount().getMessageFactory();
-        Message message = messageFactory.create(params);
-        System.out.println(message.getSid());
-
-    }*/
-
     public static void sendSMS(String recipientPhoneNumber, String smsMessage) throws TwilioRestException {
 
         HttpURLConnection connection = null;
