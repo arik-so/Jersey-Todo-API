@@ -12,7 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 /**
- * Created by arik-so on 12/18/14.
+ * A class used as an interface for communication with Twilio
  */
 public class TwilioConnector {
 
@@ -21,6 +21,12 @@ public class TwilioConnector {
     private static final String ACCOUNT_AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
     private static final String SENDER_NUMBER = "%2B16506207470";
 
+    /**
+     * Send an SMS using Twilio
+     * @param recipientPhoneNumber The phone number to send it to
+     * @param smsMessage The message to send
+     * @throws TwilioRestException Thrown when Twilio says there is an error
+     */
     public static void sendSMS(String recipientPhoneNumber, String smsMessage) throws TwilioRestException {
 
         HttpURLConnection connection = null;

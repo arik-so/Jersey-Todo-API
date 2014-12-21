@@ -1,7 +1,7 @@
 package com.arik.models;
 
 import com.arik.persistency.PersistentStorage;
-import com.arik.search.SearchlyHelper;
+import com.arik.search.SearchlyConnector;
 import com.mongodb.*;
 import io.searchbox.annotations.JestId;
 import io.searchbox.client.JestClient;
@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Created by arik-so on 12/19/14.
+ * Model of a to-do item
  */
 public class TodoItem {
 
@@ -27,6 +27,9 @@ public class TodoItem {
     private static final String DB_TABLE = "tests";
     private static SecureRandom secureRandom = new SecureRandom();
 
+    /**
+     * The ID of the item used both by MongoDB and by Searchly
+     */
     @JestId
     private String identifier;
 
@@ -46,6 +49,9 @@ public class TodoItem {
      */
     private String modificationToken;
 
+    /**
+     * A MongoDB object row that always reflects the properties of the class for more convenient DB update operations
+     */
     private DBObject row;
 
     /**
@@ -59,6 +65,7 @@ public class TodoItem {
         DB database = PersistentStorage.getDatabaseConnection();
         DBCollection table = database.getCollection(DB_TABLE);
 
+        // we want the modification token to be fairly random
         String modificationToken = new BigInteger(128, secureRandom).toString(32);
 
         BasicDBObject row = new BasicDBObject();
@@ -76,7 +83,7 @@ public class TodoItem {
         // create the search index
         try {
 
-            JestClient jestClient = SearchlyHelper.getJestClient();
+            JestClient jestClient = SearchlyConnector.getJestClient();
             Index index = new Index.Builder(todoItem.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(todoItem.getID()).build();
             jestClient.execute(index);
 
@@ -173,7 +180,7 @@ public class TodoItem {
         table.update(query, this.row);
 
         // update the search index
-        JestClient jestClient = SearchlyHelper.getJestClient();
+        JestClient jestClient = SearchlyConnector.getJestClient();
         Index update = new Index.Builder(this.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
 
         jestClient.execute(update);
@@ -193,7 +200,7 @@ public class TodoItem {
 
         // remove the search index
         try {
-            JestClient jestClient = SearchlyHelper.getJestClient();
+            JestClient jestClient = SearchlyConnector.getJestClient();
             Delete delete = new Delete.Builder(this.getID()).index(JEST_INDEX).type(JEST_TYPE).build();
 
             jestClient.execute(delete);
@@ -272,15 +279,6 @@ public class TodoItem {
         
         if(!this.subscribers.contains(phoneNumber)){
             this.subscribers.add(phoneNumber);
-            this.row.put("subscribers", this.subscribers);
-        }
-        
-    }
-    
-    public void removeSubscriber(String phoneNumber){
-        
-        if(this.subscribers.contains(phoneNumber)){
-            this.subscribers.remove(phoneNumber);
             this.row.put("subscribers", this.subscribers);
         }
         

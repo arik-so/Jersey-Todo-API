@@ -1,7 +1,7 @@
 package com.arik;
 
 import com.arik.models.TodoItem;
-import com.arik.search.SearchlyHelper;
+import com.arik.search.SearchlyConnector;
 import com.arik.twilio.TwilioConnector;
 import com.twilio.sdk.TwilioRestException;
 import io.searchbox.client.JestClient;
@@ -58,6 +58,7 @@ public class TodoResource {
 
         JSONArray json = new JSONArray();
         ArrayList<TodoItem> allTodoItems = null;
+        
         try {
             allTodoItems = TodoItem.fetchAllTodoItems();
         } catch (UnknownHostException e) {
@@ -83,7 +84,7 @@ public class TodoResource {
     @GET
     @Path("/{id}")
     @Produces("application/json")
-    public String getTodoItem(@PathParam("id") String identifier) {
+    public String getTodoItem(@PathParam("id") final String identifier) {
 
         TodoItem todoItem = null;
         try {
@@ -111,7 +112,7 @@ public class TodoResource {
      */
     @POST
     @Produces("application/json")
-    public String createTodoItem(@FormParam("title") String title, @FormParam("body") String body) {
+    public String createTodoItem(@FormParam("title") final String title, @FormParam("body") final String body) {
 
         if (title == null || title.length() < 1) {
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The title must not be empty").build());
@@ -154,7 +155,7 @@ public class TodoResource {
     @GET
     @Path("/{id}/subscribe/{phone: ([+]|%2[bB])?[0-9]+}") // it starts with a +, a %2b (case-insensitive), or a number
     @Produces("text/plain")
-    public String subscribeToChangesOfTodoItem(@PathParam("id") String identifier, @PathParam("phone") String phoneNumber) {
+    public String subscribeToChangesOfTodoItem(@PathParam("id") final String identifier, @PathParam("phone") final String phoneNumber) {
 
         // let's check if the item exists
         TodoItem todoItem = null;
@@ -171,15 +172,16 @@ public class TodoResource {
 
 
         // next, let's normalize the phone number representation
+        String normalizedPhoneNumber = phoneNumber;
 
         // if we have a +, it's url-decoded as ' ', which could be problematic
-        if (phoneNumber.startsWith(" ")) {
-            phoneNumber = "+" + phoneNumber.trim();
+        if (normalizedPhoneNumber.startsWith(" ")) {
+            normalizedPhoneNumber = "+" + normalizedPhoneNumber.trim();
         }
 
         // in some places intl numbers start with 00, but Twilio requires a +
-        if (phoneNumber.startsWith("00")) {
-            phoneNumber = "+" + phoneNumber.substring(2);
+        if (normalizedPhoneNumber.startsWith("00")) {
+            normalizedPhoneNumber = "+" + normalizedPhoneNumber.substring(2);
         }
 
         String successMessage = "You have subscribed to the changes of task \"" + todoItem.getTitle() + "\".";
@@ -188,8 +190,8 @@ public class TodoResource {
 
         try {
 
-            TwilioConnector.sendSMS(phoneNumber, successMessage);
-            todoItem.addSubscriber(phoneNumber);
+            TwilioConnector.sendSMS(normalizedPhoneNumber, successMessage);
+            todoItem.addSubscriber(normalizedPhoneNumber);
             todoItem.save();
 
         } catch (Exception e) {
@@ -218,7 +220,7 @@ public class TodoResource {
     @PUT
     @Path("/{id}")
     @Produces("application/json")
-    public String updateTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String modificationToken, @FormParam("title") String title, @FormParam("body") String body, @FormParam("done") String isDoneString) {
+    public String updateTodoItem(@PathParam("id") final String identifier, @FormParam("modification_token") final String modificationToken, @FormParam("title") final String title, @FormParam("body") final String body, @FormParam("done") final String isDoneString) {
 
         TodoItem todoItem = null;
         try {
@@ -311,7 +313,7 @@ public class TodoResource {
      */
     @DELETE
     @Path("/{id}")
-    public String removeTodoItem(@PathParam("id") String identifier, @QueryParam("modification_token") String modificationToken) {
+    public String removeTodoItem(@PathParam("id") final String identifier, @QueryParam("modification_token") final String modificationToken) {
 
         TodoItem todoItem = null;
         try {
@@ -347,7 +349,7 @@ public class TodoResource {
      */
     @GET
     @Path("/search/{query}")
-    public String searchTodoItems(@PathParam("query") String queryString) {
+    public String searchTodoItems(@PathParam("query") final String queryString) {
 
         String elasticSearchQuery = null;
 
@@ -355,22 +357,19 @@ public class TodoResource {
         // fails, it's due to erroneous configuration, and no specific messages should leave the server
         try {
             // this should never be zero
-            URL queryPresetURL = SearchlyHelper.class.getClassLoader().getResource(QUERY_PRESET_PATH);
+            URL queryPresetURL = SearchlyConnector.class.getClassLoader().getResource(QUERY_PRESET_PATH);
 
             String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
             elasticSearchQuery = StringUtils.replace(queryPreset, "{QUERY_STRING}", queryString);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException();
-        } catch (URISyntaxException e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
             throw new InternalServerErrorException();
         }
 
         Search search = new Search.Builder(elasticSearchQuery).addIndex(TodoItem.JEST_INDEX).addType(TodoItem.JEST_TYPE).build();
 
-        JestClient client = SearchlyHelper.getJestClient();
+        JestClient client = SearchlyConnector.getJestClient();
         SearchResult result = null;
         try {
             result = client.execute(search);
