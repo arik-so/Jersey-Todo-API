@@ -10,13 +10,13 @@ curl --data "title=Hello+World&body=Buy+some+bye+byes" http://localhost:5000/tod
 
 It will return a response of the following type:
 
-```
+```javascript
 {
-	"id":"5496de5fd4c6d2992e916299",
-	"title":"Hello World",
-	"body":"Buy some bye byes",
-	"modification_token":"6cnvgcejcvh60nlebvru6vc9ev",
-	"done":false
+	"id" : "5496de5fd4c6d2992e916299",
+	"title" : "Hello World",
+	"body" : "Buy some bye byes",
+	"modification_token" : "6cnvgcejcvh60nlebvru6vc9ev",
+	"done" : false
 }
 ```
 
@@ -31,12 +31,12 @@ curl http://localhost:5000/todo/5496de5fd4c6d2992e916299
 
 The response is a JSON representation of the object:
 
-```
+```javascript
 {
-	"id":"5496de5fd4c6d2992e916299",
-	"title":"Hello World",
-	"body":"Buy some bye byes",
-	"done":false
+	"id" : "5496de5fd4c6d2992e916299",
+	"title" : "Hello World",
+	"body" : "Buy some bye byes",
+	"done" : false
 }
 ```
 
@@ -50,13 +50,13 @@ curl http://localhost:5000/todo
 
 Now, the response is no longer a JSON dictionary, but a JSON array containing all the todo items:
 
-```
+```javascript
 [
 	{
-		"id":"5496de5fd4c6d2992e916299",
-		"title":"Hello World",
-		"body":"Buy some bye byes",
-		"done":false
+		"id" : "5496de5fd4c6d2992e916299",
+		"title" : "Hello World",
+		"body" : "Buy some bye byes",
+		"done" : false
 	}
 ]
 ```
@@ -72,10 +72,10 @@ curl -X PUT --data "title=Hello+World+(modified)&done=true&modification_token=6c
 The response is the new JSON representation of the todo item:
 ```javascript
 {
-	"id":"5496de5fd4c6d2992e916299",
-	"title":"Hello World (modified)",
-	"body":"Buy some bye byes",
-	"done":true
+	"id" : "5496de5fd4c6d2992e916299",
+	"title" : "Hello World (modified)",
+	"body" : "Buy some bye byes",
+	"done" : true
 }
 ```
 
