@@ -1,6 +1,7 @@
 package com.arik.persistency;
 
-import com.mongodb.*;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 
 import java.net.UnknownHostException;
 

@@ -5,7 +5,8 @@ import com.arik.search.SearchlyHelper;
 import com.mongodb.*;
 import io.searchbox.annotations.JestId;
 import io.searchbox.client.JestClient;
-import io.searchbox.core.*;
+import io.searchbox.core.Delete;
+import io.searchbox.core.Index;
 import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 
@@ -36,6 +37,11 @@ public class TodoItem {
     private boolean isDone;
 
     /**
+     * A list of phone numbers to be notified whenever a change occurs
+     */
+    private ArrayList<String> subscribers;
+
+    /**
      * Necessary in order to update or delete an item
      */
     private String modificationToken;
@@ -59,6 +65,7 @@ public class TodoItem {
         row.append("title", null);
         row.append("body", null);
         row.append("is_done", false);
+        row.append("subscribers", new ArrayList<String>());
         row.append("modification_token", modificationToken);
 
         table.insert(row);
@@ -121,6 +128,12 @@ public class TodoItem {
         todoItem.title = (String) row.get("title");
         todoItem.body = (String) row.get("body");
         todoItem.isDone = (Boolean) row.get("is_done");
+        
+        todoItem.subscribers = (ArrayList<String>) row.get("subscribers");
+        if(todoItem.subscribers == null){
+            todoItem.subscribers = new ArrayList<String>();
+        }
+        
         todoItem.modificationToken = (String) row.get("modification_token");
 
         return todoItem;
@@ -206,7 +219,7 @@ public class TodoItem {
 
     }
 
-    private Map<String, String> toElasticSearchMap(){
+    private Map<String, String> toElasticSearchMap() {
 
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         map.put("title", this.getTitle());
@@ -217,11 +230,11 @@ public class TodoItem {
     }
 
     public String getID() {
-        return identifier;
+        return this.identifier;
     }
 
     public String getTitle() {
-        return title;
+        return this.title;
     }
 
     public void setTitle(String title) {
@@ -248,6 +261,29 @@ public class TodoItem {
     }
 
     public String getModificationToken() {
-        return modificationToken;
+        return this.modificationToken;
     }
+
+    public ArrayList<String> getSubscribers() {
+        return this.subscribers;
+    }
+
+    public void addSubscriber(String phoneNumber){
+        
+        if(!this.subscribers.contains(phoneNumber)){
+            this.subscribers.add(phoneNumber);
+            this.row.put("subscribers", this.subscribers);
+        }
+        
+    }
+    
+    public void removeSubscriber(String phoneNumber){
+        
+        if(this.subscribers.contains(phoneNumber)){
+            this.subscribers.remove(phoneNumber);
+            this.row.put("subscribers", this.subscribers);
+        }
+        
+    }
+    
 }

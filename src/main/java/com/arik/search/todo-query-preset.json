@@ -1,5 +1,5 @@
 {
-  "query" : {
+  "query": {
     "query_string": {
       "query": "{QUERY_STRING}",
       "fields": [

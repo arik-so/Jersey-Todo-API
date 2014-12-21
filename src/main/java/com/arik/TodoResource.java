@@ -13,14 +13,11 @@ import org.json.simple.JSONObject;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by arik-so on 12/18/14.
@@ -28,6 +25,8 @@ import java.util.List;
 @Path("/todo")
 public class TodoResource {
 
+    private static final String QUERY_PRESET_PATH = "todo-query-preset.json";
+    
     @GET
     @Produces("application/json")
     public String listTodoItems() throws UnknownHostException {
@@ -91,8 +90,19 @@ public class TodoResource {
     @GET
     @Path("/{id}/subscribe/{phone: ([+]|%2[bB])?[0-9]+}") // it starts with a +, a %2b (case-insensitive), or a number
     @Produces("text/plain")
-    public String subscribeToChangesOfTodoItem(@PathParam("id") String identifier, @PathParam("phone") String phoneNumber) {
+    public String subscribeToChangesOfTodoItem(@PathParam("id") String identifier, @PathParam("phone") String phoneNumber) throws UnknownHostException {
 
+        // let's check if the item exists
+        TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
+
+        // the item with that ID does no exist
+        if (todoItem == null) {
+            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+        }
+        
+        
+        // next, let's normalize the phone number representation
+        
         // if we have a +, it's url-decoded as ' ', which could be problematic
         if (phoneNumber.startsWith(" ")) {
             phoneNumber = "+" + phoneNumber.trim();
@@ -105,20 +115,30 @@ public class TodoResource {
 
         String successMessage = "You have subscribed to the changes of Todo item " + identifier + ".";
 
-        System.out.println("Would be success: "+successMessage);
-        
+        System.out.println("Would be success: " + successMessage);
+
         // first of all, let's send a test SMS
-        
+
         try {
-            
+
             TwilioConnector.sendSMS(phoneNumber, successMessage);
-            
+            todoItem.addSubscriber(phoneNumber);
+            todoItem.save();
+
         } catch (TwilioRestException e) {
-            
+
             e.printStackTrace();
-            
+
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).
                     entity("There was an issue with Twilio: " + e.getErrorMessage()).build());
+        } catch (Exception e) {
+            
+            /*
+            Only occurs if Jest has not managed to reindex the item. We do not care about indexation at this instance,
+            however, because none of the indexed properties have been modified
+             */
+            e.printStackTrace();
+            
         }
 
         return successMessage;
@@ -131,6 +151,8 @@ public class TodoResource {
     public String updateTodoItem(@PathParam("id") String identifier, @FormParam("modification_token") String modificationToken, @FormParam("title") String title, @FormParam("body") String body, @FormParam("done") String isDoneString) throws UnknownHostException, TwilioRestException {
 
         TodoItem todoItem = TodoItem.fetchTodoItemByID(identifier);
+        boolean notifySubscribers = false;
+        String doneStatusModifier = null;
 
         // the item with that ID does no exist
         if (todoItem == null) {
@@ -156,10 +178,20 @@ public class TodoResource {
 
         if (isDoneString != null) {
 
+            notifySubscribers = true;
+            
             if (isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")) {
+                
                 todoItem.setDone(true);
+                doneStatusModifier = "done.";
+                
             } else if (isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")) {
+                
                 todoItem.setDone(false);
+                doneStatusModifier = "not done.";
+                
+            }else{
+                notifySubscribers = false;
             }
 
         }
@@ -169,6 +201,20 @@ public class TodoResource {
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Item could not be modified: " + e.getMessage()).build());
+        }
+        
+        if(notifySubscribers){
+
+            for(String phoneNumber : todoItem.getSubscribers()){
+
+                try {
+                    TwilioConnector.sendSMS(phoneNumber, "\""+todoItem.getTitle()+"\" task has been marked as " + doneStatusModifier);
+                } catch (TwilioRestException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
         }
 
         // TwilioConnector.sendSMS();
@@ -201,21 +247,19 @@ public class TodoResource {
     @Path("/search/{query}")
     public String searchTodoItems(@PathParam("query") String queryString) throws Exception {
 
-        URL queryPresetURL = SearchlyHelper.class.getClassLoader().getResource("todo-query-preset.json");
+        // this should never be zero
+        URL queryPresetURL = SearchlyHelper.class.getClassLoader().getResource(QUERY_PRESET_PATH);
+        
         String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
         String elasticSearchQuery = StringUtils.replace(queryPreset, "{QUERY_STRING}", queryString);
-
-        System.out.println(elasticSearchQuery);
 
         Search search = new Search.Builder(elasticSearchQuery).addIndex(TodoItem.JEST_INDEX).addType(TodoItem.JEST_TYPE).build();
 
         JestClient client = SearchlyHelper.getJestClient();
         SearchResult result = client.execute(search);
 
-        System.out.println("Search: "+search);
-        System.out.println("Result: "+result);
-        System.out.println("Error: " + result.getErrorMessage());
-        System.out.println("Result path: "+result.getPathToResult());
+        System.out.println("Search: " + elasticSearchQuery);
+        System.out.println("Search error: " + result.getErrorMessage());
 
         JSONArray json = new JSONArray();
         return result.getJsonString();

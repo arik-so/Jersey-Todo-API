@@ -95,3 +95,16 @@ unverified numbers; verify +16509991234 at twilio.com/user/account/phone-numbers
 to send messages to unverified numbers.
 
 Verifying the number with Twilio would be the easiest remedy.
+
+NOTE: **If a Twilio error is thrown, you are not added to the subscribers list.**
+
+### Search existing todo items
+
+```shell
+curl http://localhost:5000/todo/search/hell*
+```
+
+The titles and bodies of all existing todo items will be searched. The title matches are prioritized as being thrice as
+relevant as body matches.
+
+
