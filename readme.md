@@ -30,3 +30,18 @@ The modification token is only ever shown after the object creation. It is neces
 
 ### Modify an existing todo item
 
+```
+curl -X PUT --data "title=Hello+World+(modified)&modification_token=6cnvgcejcvh60nlebvru6vc9ev" http://localhost:5000/todo/5496de5fd4c6d2992e916299
+```
+
+The response is the new JSON representation of the todo item:
+```
+{
+	"id":"5496de5fd4c6d2992e916299",
+	"title":"Hello World (modified)",
+	"body":"Buy some bye byes",
+	"done":false
+}
+```
+
+Note that the modification token is no longer included.
