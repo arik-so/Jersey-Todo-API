@@ -60,6 +60,8 @@ public class TodoItem {
     /**
      * In order to avoid confusion, we do not allow external calls to the empty constructor such that objects
      * are always created using the create()-method an automatically added to the DB
+     *
+     * @param row The MongoDB row to initialize the data from
      */
     private TodoItem(final DBObject row) {
 
