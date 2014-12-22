@@ -13,9 +13,14 @@ import java.net.UnknownHostException;
  */
 public class RestAPIExceptionHandler {
 
-    // no need for singletons in this particular instance
+    /**
+     * Handle an external service exception
+     *
+     * @param externalServiceException The exception to handle
+     */
     public static void handleExternalServiceException(final Exception externalServiceException) {
 
+        // stderr directs the output to Heroku's logger
         externalServiceException.printStackTrace();
 
         String errorMessage;
@@ -35,6 +40,12 @@ public class RestAPIExceptionHandler {
 
     }
 
+    /**
+     * Throw a JSON/encoded error with status and message fields
+     *
+     * @param status       HTTP status
+     * @param errorMessage The error message
+     */
     public static void handleException(final Response.Status status, final String errorMessage) {
 
         JSONObject jsonError = new JSONObject();

@@ -260,21 +260,6 @@ public class TodoItem {
 
     }
 
-    /**
-     * Internal function for the indexation on Searchly
-     *
-     * @return A map used for the indexation on Searchly
-     */
-    private Map<String, String> toElasticSearchMap() {
-
-        final LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        map.put("title", this.getTitle());
-        map.put("body", this.getBody());
-
-        return map;
-
-    }
-
     public String getID() {
         return this.identifier;
     }
@@ -326,6 +311,21 @@ public class TodoItem {
             this.subscribers.add(phoneNumber);
             this.row.put("subscribers", this.subscribers);
         }
+
+    }
+
+    /**
+     * Internal function for the indexation on Searchly
+     *
+     * @return A map used for the indexation on Searchly
+     */
+    private Map<String, String> toElasticSearchMap() {
+
+        final LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("title", this.getTitle());
+        map.put("body", this.getBody());
+
+        return map;
 
     }
 

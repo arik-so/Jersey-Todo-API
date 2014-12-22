@@ -1,6 +1,5 @@
 package com.arik.heroku;
 
-import com.arik.TodoResource;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -17,8 +16,6 @@ public class Main {
         if (webPort == null || webPort.isEmpty()) {
             webPort = "8080";
         }
-
-        new TodoResource().listTodoItems();
 
         final Server server = new Server(Integer.valueOf(webPort));
         final WebAppContext root = new WebAppContext();

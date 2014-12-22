@@ -1,8 +1,10 @@
 package com.arik;
 
 import com.arik.models.TodoItem;
+import com.arik.models.TodoItemState;
 import com.arik.search.JestException;
 import com.arik.search.SearchlyConnector;
+import com.arik.twilio.PhoneNumberNormalizer;
 import com.arik.twilio.TwilioConnector;
 import com.twilio.sdk.TwilioRestException;
 import io.searchbox.client.JestClient;
@@ -82,8 +84,7 @@ public class TodoResource {
             RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
         }
 
-        JSONObject json = todoItem.toJSONObject(false);
-        return json.toString();
+        return todoItem.toJSONObject(false).toString();
 
     }
 
@@ -98,10 +99,9 @@ public class TodoResource {
     @Produces("application/json")
     public String createTodoItem(@FormParam("title") final String title, @FormParam("body") final String body) {
 
-        if (title == null || title.length() < 1) {
+        if (title == null || title.isEmpty()) {
             RestAPIExceptionHandler.handleException(Response.Status.BAD_REQUEST, "The title must not be empty");
         }
-
 
         TodoItem todoItem;
 
@@ -124,8 +124,7 @@ public class TodoResource {
 
         }
 
-        JSONObject json = todoItem.toJSONObject(true);
-        return json.toString();
+        return todoItem.toJSONObject(true).toString();
 
     }
 
@@ -154,24 +153,12 @@ public class TodoResource {
             RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
         }
 
-
         // next, let's normalize the phone number representation
-        String normalizedPhoneNumber = phoneNumber;
-
-        // if we have a +, it's url-decoded as ' ', which could be problematic
-        if (normalizedPhoneNumber.startsWith(" ")) {
-            normalizedPhoneNumber = "+" + normalizedPhoneNumber.trim();
-        }
-
-        // in some places intl numbers start with 00, but Twilio requires a +
-        if (normalizedPhoneNumber.startsWith("00")) {
-            normalizedPhoneNumber = "+" + normalizedPhoneNumber.substring(2);
-        }
-
-        String successMessage = "You have subscribed to the changes of task \"" + todoItem.getTitle() + "\".";
+        final String normalizedPhoneNumber = PhoneNumberNormalizer.normalizePhoneNumber(phoneNumber);
+        final String successMessage = "You have subscribed to the changes of task \"" + todoItem.getTitle() + "\".";
 
         // we do not need to check the phone number and send SMS if the item has already been subscribed to
-        if(!todoItem.getSubscribers().contains(normalizedPhoneNumber)) {
+        if (!todoItem.getSubscribers().contains(normalizedPhoneNumber)) {
 
             try {
 
@@ -188,7 +175,7 @@ public class TodoResource {
 
         }
 
-        JSONObject successJSON = new JSONObject();
+        final JSONObject successJSON = new JSONObject();
         successJSON.put("status", Response.Status.OK.getStatusCode());
         successJSON.put("message", successMessage);
         return successJSON.toString();
@@ -216,9 +203,6 @@ public class TodoResource {
 
             todoItem = TodoItem.fetchTodoItemByID(identifier);
 
-            boolean notifySubscribers = false;
-            String doneStatusModifier = null;
-
             // the item with that ID does no exist
             if (todoItem == null) {
                 RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
@@ -237,45 +221,18 @@ public class TodoResource {
                 todoItem.setBody(body);
             }
 
-            if (isDoneString != null) {
 
-                notifySubscribers = true;
+            final TodoItemState.DoneState doneState = TodoItemState.DoneState.fromString(isDoneString);
 
-                if (isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")) {
-
-                    todoItem.setDone(true);
-                    doneStatusModifier = "done.";
-
-                } else if (isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")) {
-
-                    todoItem.setDone(false);
-                    doneStatusModifier = "not done.";
-
-                } else {
-                    notifySubscribers = false;
-                }
-
+            if (doneState.isModifier()) {
+                todoItem.setDone(doneState.isDone());
             }
 
+            // we need to ensure persistence before we notify via Twilio
             todoItem.save();
 
-            if (notifySubscribers) {
-
-                for (String phoneNumber : todoItem.getSubscribers()) {
-
-                    try {
-                        TwilioConnector.sendSMS(phoneNumber, "\"" + todoItem.getTitle() + "\" task has been marked as " + doneStatusModifier);
-                    } catch (TwilioRestException e) {
-
-                        // we suppress these errors from propagation
-                        e.printStackTrace();
-
-                    }
-
-                }
-
-            }
-
+            // after persistence is guaranteed, we notify the Twilio subscribers about the change
+            notifySubscribers(todoItem, doneState);
 
         } catch (UnknownHostException | JestException e) {
 
@@ -325,6 +282,8 @@ public class TodoResource {
         } catch (JestException e) {
 
             // even if the index has failed to be removed, the item no longer exists
+            
+            // stderr directs the output to Heroku's logger
             e.printStackTrace();
 
         }
@@ -350,10 +309,14 @@ public class TodoResource {
         // fails, it's due to erroneous configuration, and no specific messages should leave the server
         try {
             // this should never be zero
-            URL queryPresetURL = SearchlyConnector.class.getClassLoader().getResource(QUERY_PRESET_PATH);
+            final URL queryPresetURL = SearchlyConnector.class.getClassLoader().getResource(QUERY_PRESET_PATH);
 
-            String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
-            elasticSearchQuery = StringUtils.replace(queryPreset, "{QUERY_STRING}", queryString);
+            final String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
+            
+            // we need to sanitize the input to be a properly formatted JSON string in order to prevent search injection
+            final String sanitizedQueryString = JSONObject.escape(queryString);
+
+            elasticSearchQuery = StringUtils.replace(queryPreset, "{QUERY_STRING}", sanitizedQueryString);
 
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
@@ -376,33 +339,65 @@ public class TodoResource {
 
         }
 
-
-        final JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
-        final JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
-        final JSONArray foundItems = (JSONArray) outerHits.get("hits");
-
         final JSONArray output = new JSONArray();
+        String errorMessage = result.getErrorMessage();
 
-        for (Object currentFindObject : foundItems) {
+        // if there was an error message, i. e. a parse error, sent from Searchly, it's none of the user's business
+        // we just say nothing was found
+        if(errorMessage == null) {
 
-            JSONObject currentFind = (JSONObject) currentFindObject;
-            String currentIdentifier = (String) currentFind.get("_id");
+            final JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
+            final JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
+            final JSONArray foundItems = (JSONArray) outerHits.get("hits");
 
-            TodoItem currentItem = null;
-            try {
-                currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
-            } catch (UnknownHostException e) {
-                RestAPIExceptionHandler.handleExternalServiceException(e);
+
+            for (Object currentFindObject : foundItems) {
+
+                JSONObject currentFind = (JSONObject) currentFindObject;
+                String currentIdentifier = (String) currentFind.get("_id");
+
+                TodoItem currentItem = null;
+                try {
+                    currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
+                } catch (UnknownHostException e) {
+                    RestAPIExceptionHandler.handleExternalServiceException(e);
+                }
+
+                // occasionally, an item will have been removed from MongoDB but an index removal error could have occurred thereafter
+                if (currentItem == null) { continue; }
+
+                output.add(currentItem.toJSONObject(false));
+
             }
-
-            // occasionally, an item will have been removed from MongoDB but an index removal error could have occurred thereafter
-            if (currentItem == null) { continue; }
-
-            output.add(currentItem.toJSONObject(false));
 
         }
 
         return output.toString();
+
+    }
+
+    /**
+     * @param todoItem
+     * @param doneState
+     */
+    private void notifySubscribers(final TodoItem todoItem, final TodoItemState.DoneState doneState) {
+
+        if (doneState.isModifier()) {
+
+            for (String phoneNumber : todoItem.getSubscribers()) {
+
+                try {
+                    TwilioConnector.sendSMS(phoneNumber, "\"" + todoItem.getTitle() + "\" task has been marked as " + doneState.getStateMessage() + ".");
+                } catch (TwilioRestException e) {
+
+                    // we suppress these errors from propagation
+                    e.printStackTrace();
+
+                }
+
+            }
+
+        }
 
     }
 
