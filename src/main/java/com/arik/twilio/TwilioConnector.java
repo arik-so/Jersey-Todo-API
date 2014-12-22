@@ -26,7 +26,7 @@ public class TwilioConnector {
      * @param smsMessage The message to send
      * @throws TwilioRestException Thrown when Twilio says there is an error
      */
-    public static void sendSMS(String recipientPhoneNumber, String smsMessage) throws TwilioRestException {
+    public static void sendSMS(final String recipientPhoneNumber, final String smsMessage) throws TwilioRestException {
 
         HttpURLConnection connection = null;
         int responseStatusCode = -1;
@@ -97,10 +97,13 @@ public class TwilioConnector {
 
         }
 
+        System.out.println("RESPONSE STATUS: "+responseStatusCode);
+        
         JSONObject responseDetails = (JSONObject) JSONValue.parse(response);
         String responseMessage = (String) responseDetails.get("message");
 
-        if (responseStatusCode != 200) {
+        // if it is 200 <= status code <= 299, everything's all right
+        if (responseStatusCode >= 300) {
             throw new TwilioRestException(responseMessage, responseStatusCode);
         }
 

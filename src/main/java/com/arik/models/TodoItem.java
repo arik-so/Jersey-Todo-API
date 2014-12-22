@@ -1,6 +1,7 @@
 package com.arik.models;
 
 import com.arik.persistency.PersistentStorage;
+import com.arik.search.JestException;
 import com.arik.search.SearchlyConnector;
 import com.mongodb.*;
 import io.searchbox.annotations.JestId;
@@ -10,11 +11,10 @@ import io.searchbox.core.Index;
 import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 
-import java.math.BigInteger;
 import java.net.UnknownHostException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +24,7 @@ public class TodoItem {
 
     public static final String JEST_INDEX = "todo-items";
     public static final String JEST_TYPE = "todo-item";
-    private static final String DB_TABLE = "tests";
-    private static SecureRandom secureRandom = new SecureRandom();
+    private static final String DB_TABLE = "todo-items";
 
     /**
      * The ID of the item used both by MongoDB and by Searchly
@@ -42,10 +41,12 @@ public class TodoItem {
     /**
      * A list of phone numbers to be notified whenever a change occurs
      */
-    private ArrayList<String> subscribers;
+    private List<String> subscribers;
 
     /**
-     * Necessary in order to update or delete an item
+     * Required in order to update or delete an item
+     * We want to make sure that only the creator of the item can modify or delete it
+     * The token is only shown at creation
      */
     private String modificationToken;
 
@@ -55,48 +56,65 @@ public class TodoItem {
     private DBObject row;
 
     /**
-     * In order to avoid confusion, we do not allow external calls to the constructor
+     * In order to avoid confusion, we do not allow package-external calls to the empty constructor such that objects
+     * are always created using the create()-method an automatically added to the DB
      */
     private TodoItem() {
     }
 
+    private TodoItem(final DBObject row) {
+
+        final ObjectId identifier = (ObjectId) row.get("_id");
+
+        this.row = row;
+
+        this.identifier = identifier.toString();
+        this.title = (String) row.get("title");
+        this.body = (String) row.get("body");
+        this.isDone = (Boolean) row.get("is_done");
+
+        this.subscribers = (List<String>) row.get("subscribers");
+        if (this.subscribers == null) {
+            this.subscribers = new ArrayList<String>();
+        }
+
+        this.modificationToken = (String) row.get("modification_token");
+
+    }
+
     /**
      * Create a new to-do item by storing it in a database and creating an index referencing it
+     *
      * @return An instance of the new item
-     * @throws Exception Thrown if there was an issue with MongoDB or with Searchly
+     * @throws com.arik.search.JestException Thrown if there was an issue with Searchly
+     * @throws java.net.UnknownHostException Thrown if there was an issue with MongoDB
      */
-    public static TodoItem create() throws Exception {
+    public static TodoItem create() throws JestException, UnknownHostException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection(DB_TABLE);
+        final DB database = PersistentStorage.getDatabaseConnection();
+        final DBCollection table = database.getCollection(DB_TABLE);
 
-        // we want the modification token to be fairly random
-        String modificationToken = new BigInteger(128, secureRandom).toString(32);
-
-        BasicDBObject row = new BasicDBObject();
-        row.append("title", null);
-        row.append("body", null);
-        row.append("is_done", false);
-        row.append("subscribers", new ArrayList<String>());
-        row.append("modification_token", modificationToken);
-
+        final DBObject row = new TodoItemDBObject();
         table.insert(row);
-        ObjectId insertionID = (ObjectId) row.get("_id");
 
-        TodoItem todoItem = fetchTodoItemByID(insertionID.toString());
+        // after the object has been added to the DB, the _id field is filled with an ObjectId
+        // MongoDB guarantees that the _id field is safe to cast
+        final ObjectId insertionID = (ObjectId) row.get("_id");
+
+        final TodoItem todoItem = fetchTodoItemByID(insertionID.toString());
 
         // create the search index
         try {
 
-            JestClient jestClient = SearchlyConnector.getJestClient();
-            Index index = new Index.Builder(todoItem.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(todoItem.getID()).build();
+            final JestClient jestClient = SearchlyConnector.getJestClient();
+            final Index index = new Index.Builder(todoItem.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(todoItem.getID()).build();
             jestClient.execute(index);
 
         } catch (Exception e) {
 
             // if we have failed to index this item, it's unsearchable, and thus, useless
             todoItem.remove();
-            throw e;
+            throw new JestException(e);
 
         }
 
@@ -106,124 +124,127 @@ public class TodoItem {
 
     /**
      * Get an existing to-do item by its ID
+     *
      * @param identifier the ID of the to-do item
      * @return An instance of the item
      * @throws UnknownHostException Thrown if there was an issue with MongoDB
      */
     public static TodoItem fetchTodoItemByID(String identifier) throws UnknownHostException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection(DB_TABLE);
+        final DB database = PersistentStorage.getDatabaseConnection();
+        final DBCollection table = database.getCollection(DB_TABLE);
 
-        BasicDBObject query = new BasicDBObject();
-        ObjectId objectID;
+        final BasicDBObject query = new BasicDBObject();
+        final ObjectId objectID = new ObjectId(identifier);
 
-        try {
-            objectID = new ObjectId(identifier);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
         query.put("_id", objectID);
 
-        DBObject row;
-
-        try {
-            row = table.findOne(query);
-        } catch (MongoException e) {
-            e.printStackTrace();
-            return null;
-        }
+        final DBObject row = table.findOne(query);
 
         if (row == null) {
             return null;
         }
 
-        TodoItem todoItem = new TodoItem();
-        todoItem.row = row;
-
-        todoItem.identifier = identifier;
-        todoItem.title = (String) row.get("title");
-        todoItem.body = (String) row.get("body");
-        todoItem.isDone = (Boolean) row.get("is_done");
-        
-        todoItem.subscribers = (ArrayList<String>) row.get("subscribers");
-        if(todoItem.subscribers == null){
-            todoItem.subscribers = new ArrayList<String>();
-        }
-        
-        todoItem.modificationToken = (String) row.get("modification_token");
-
-        return todoItem;
+        return new TodoItem(row);
 
     }
 
-    public static ArrayList<TodoItem> fetchAllTodoItems() throws UnknownHostException {
+    /**
+     * *
+     *
+     * @return
+     * @throws UnknownHostException
+     */
+    public static List<TodoItem> fetchAllTodoItems() throws UnknownHostException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection(DB_TABLE);
+        final DB database = PersistentStorage.getDatabaseConnection();
+        final DBCollection table = database.getCollection(DB_TABLE);
 
-        ArrayList<TodoItem> allItems = new ArrayList<>();
+        final List<TodoItem> allItems = new ArrayList<>();
 
-        DBCursor cursor = table.find();
+        // using try with automatic resource management
+        // finally is not required because cursor.close() is called automatically
+        try (DBCursor cursor = table.find()) {
 
-        try {
+            String currentIdentifier;
             while (cursor.hasNext()) {
-                String currentIdentifier = cursor.next().get("_id").toString();
+                currentIdentifier = cursor.next().get("_id").toString();
                 allItems.add(fetchTodoItemByID(currentIdentifier));
             }
-        } finally {
-            cursor.close();
+
         }
 
         return allItems;
 
     }
 
-    public void save() throws Exception {
+    /**
+     * *
+     *
+     * @throws UnknownHostException
+     * @throws JestException
+     */
+    public void save() throws UnknownHostException, JestException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection(DB_TABLE);
+        final DB database = PersistentStorage.getDatabaseConnection();
+        final DBCollection table = database.getCollection(DB_TABLE);
 
-        BasicDBObject query = new BasicDBObject();
+        final BasicDBObject query = new BasicDBObject();
         query.append("_id", new ObjectId(identifier));
 
         table.update(query, this.row);
 
         // update the search index
-        JestClient jestClient = SearchlyConnector.getJestClient();
-        Index update = new Index.Builder(this.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
+        final JestClient jestClient = SearchlyConnector.getJestClient();
+        final Index update = new Index.Builder(this.toElasticSearchMap()).index(JEST_INDEX).type(JEST_TYPE).id(this.getID()).build();
 
-        jestClient.execute(update);
+        try {
+            jestClient.execute(update);
+        } catch (Exception e) {
+            throw new JestException(e);
+        }
 
     }
 
-    public void remove() throws UnknownHostException {
+    /**
+     * *
+     *
+     * @throws UnknownHostException
+     * @throws JestException
+     */
+    public void remove() throws UnknownHostException, JestException {
 
-        DB database = PersistentStorage.getDatabaseConnection();
-        DBCollection table = database.getCollection(DB_TABLE);
+        final DB database = PersistentStorage.getDatabaseConnection();
+        final DBCollection table = database.getCollection(DB_TABLE);
 
-        BasicDBObject query = new BasicDBObject();
+        final BasicDBObject query = new BasicDBObject();
         query.append("_id", new ObjectId(identifier));
 
         table.remove(query);
 
 
         // remove the search index
-        try {
-            JestClient jestClient = SearchlyConnector.getJestClient();
-            Delete delete = new Delete.Builder(this.getID()).index(JEST_INDEX).type(JEST_TYPE).build();
+        final JestClient jestClient = SearchlyConnector.getJestClient();
+        final Delete delete = new Delete.Builder(this.getID()).index(JEST_INDEX).type(JEST_TYPE).build();
 
+        try {
             jestClient.execute(delete);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new JestException(e);
         }
 
     }
 
+    /**
+     * *
+     *
+     * @param includeModificationToken
+     * @return
+     */
     public JSONObject toJSONObject(boolean includeModificationToken) {
 
-        JSONObject json = new JSONObject();
+        // alas, JSONObject does not support Generics and therefore produces unchecked call
+        final JSONObject json = new JSONObject();
         json.put("id", this.getID());
         json.put("title", this.getTitle());
         json.put("body", this.getBody());
@@ -237,6 +258,11 @@ public class TodoItem {
 
     }
 
+    /**
+     * *
+     *
+     * @return
+     */
     private Map<String, String> toElasticSearchMap() {
 
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
@@ -282,17 +308,23 @@ public class TodoItem {
         return this.modificationToken;
     }
 
-    public ArrayList<String> getSubscribers() {
+    public List<String> getSubscribers() {
         return this.subscribers;
     }
 
-    public void addSubscriber(String phoneNumber){
-        
-        if(!this.subscribers.contains(phoneNumber)){
+    /**
+     * *
+     *
+     * @param phoneNumber
+     */
+    public void addSubscriber(String phoneNumber) {
+
+        if (!this.subscribers.contains(phoneNumber)) {
             this.subscribers.add(phoneNumber);
             this.row.put("subscribers", this.subscribers);
         }
-        
+
     }
-    
+
+
 }

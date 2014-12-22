@@ -1,6 +1,7 @@
 package com.arik;
 
 import com.arik.models.TodoItem;
+import com.arik.search.JestException;
 import com.arik.search.SearchlyConnector;
 import com.arik.twilio.TwilioConnector;
 import com.twilio.sdk.TwilioRestException;
@@ -20,7 +21,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Controller for handling actions related to the To-do model
@@ -43,6 +44,8 @@ public class TodoResource {
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with MongoDB: " + e.getMessage()).build());
         } else if (e instanceof TwilioRestException) {
             throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Twilio: " + e.getMessage()).build());
+        } else if (e instanceof JestException){
+            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
         }
 
     }
@@ -57,8 +60,8 @@ public class TodoResource {
     public String listTodoItems() {
 
         JSONArray json = new JSONArray();
-        ArrayList<TodoItem> allTodoItems = null;
-        
+        List<TodoItem> allTodoItems = null;
+
         try {
             allTodoItems = TodoItem.fetchAllTodoItems();
         } catch (UnknownHostException e) {
@@ -333,7 +336,7 @@ public class TodoResource {
 
         try {
             todoItem.remove();
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | JestException e) {
             handleAmbiguousException(e);
         }
 
