@@ -184,7 +184,7 @@ public class TodoItem {
      * Save a modified object to the database
      *
      * @throws UnknownHostException Thrown if there is an issue with MongoDB
-     * @throws JestException Thrown if there is an issue with Searchly
+     * @throws JestException        Thrown if there is an issue with Searchly
      */
     public void save() throws UnknownHostException, JestException {
 

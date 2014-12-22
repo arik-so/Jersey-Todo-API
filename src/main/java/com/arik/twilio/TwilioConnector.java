@@ -32,7 +32,7 @@ public class TwilioConnector {
         HttpURLConnection connection = null;
         int responseStatusCode = -1;
 
-        String authentication = ACCOUNT_SID + ":" + ACCOUNT_AUTH_TOKEN;
+        final String authentication = ACCOUNT_SID + ":" + ACCOUNT_AUTH_TOKEN;
         String base64Authentication = new BASE64Encoder().encode(authentication.getBytes());
 
         // this is a Java bug, we need to perform a workaround
@@ -51,7 +51,7 @@ public class TwilioConnector {
 
         try {
 
-            URL url = new URL(API_ENDPOINT);
+            final URL url = new URL(API_ENDPOINT);
             connection = (HttpURLConnection) url.openConnection();
 
             // we need to authenticate the API user
@@ -80,7 +80,7 @@ public class TwilioConnector {
             } catch (IOException e) {
                 responseStream = connection.getErrorStream();
             }
-            BufferedReader responseReader = new BufferedReader(new InputStreamReader(responseStream));
+            final BufferedReader responseReader = new BufferedReader(new InputStreamReader(responseStream));
 
             String responseLine;
             while ((responseLine = responseReader.readLine()) != null) {
@@ -98,8 +98,8 @@ public class TwilioConnector {
 
         }
 
-        JSONObject responseDetails = (JSONObject) JSONValue.parse(response);
-        String responseMessage = (String) responseDetails.get("message");
+        final JSONObject responseDetails = (JSONObject) JSONValue.parse(response);
+        final String responseMessage = (String) responseDetails.get("message");
 
         // if it is 200 <= status code <= 299, everything's all right
         if (responseStatusCode >= 300) {

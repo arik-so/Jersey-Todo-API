@@ -138,7 +138,7 @@ public class TodoResource {
      */
     @GET
     @Path("/{id}/subscribe/{phone: ([+]|%2[bB])?[0-9]+}") // it starts with a +, a %2b (case-insensitive), or a number
-    @Produces("text/plain")
+    @Produces("text/json")
     public String subscribeToChangesOfTodoItem(@PathParam("id") final String identifier, @PathParam("phone") final String phoneNumber) {
 
         // let's check if the item exists
@@ -183,7 +183,10 @@ public class TodoResource {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
-        return successMessage;
+        JSONObject successJSON = new JSONObject();
+        successJSON.put("status", Response.Status.OK.getStatusCode());
+        successJSON.put("message", successMessage);
+        return successJSON.toString();
 
     }
 
@@ -291,7 +294,8 @@ public class TodoResource {
      */
     @DELETE
     @Path("/{id}")
-    public String removeTodoItem(@PathParam("id") final String identifier, @QueryParam("modification_token") final String modificationToken) {
+    @Produces("application/json")
+    public Response removeTodoItem(@PathParam("id") final String identifier, @QueryParam("modification_token") final String modificationToken) {
 
         TodoItem todoItem = null;
         try {
@@ -320,7 +324,7 @@ public class TodoResource {
 
         }
 
-        return "Task \"" + todoItem.getTitle() + "\" has been removed.";
+        return Response.status(Response.Status.NO_CONTENT).build();
 
     }
 

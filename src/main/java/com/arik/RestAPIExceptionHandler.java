@@ -9,7 +9,7 @@ import javax.ws.rs.core.Response;
 import java.net.UnknownHostException;
 
 /**
- * Handles exceptions that occur pretty often due to reliance on external services such as Twilio, MongoDB, or Searchly
+ * Handles exceptions (which occur pretty often due to reliance on external services such as Twilio, MongoDB, or Searchly)
  */
 public class RestAPIExceptionHandler {
 
@@ -17,7 +17,7 @@ public class RestAPIExceptionHandler {
     public static void handleExternalServiceException(final Exception externalServiceException) {
 
         externalServiceException.printStackTrace();
-        
+
         String errorMessage;
 
         if (externalServiceException instanceof UnknownHostException) {
@@ -34,20 +34,20 @@ public class RestAPIExceptionHandler {
         handleException(Response.Status.INTERNAL_SERVER_ERROR, errorMessage);
 
     }
-    
-    public static void handleException(final Response.Status status, final String errorMessage){
+
+    public static void handleException(final Response.Status status, final String errorMessage) {
 
         JSONObject jsonError = new JSONObject();
         jsonError.put("status", status.getStatusCode());
-        
-        if(errorMessage != null && !errorMessage.isEmpty()) {
+
+        if (errorMessage != null && !errorMessage.isEmpty()) {
             jsonError.put("message", errorMessage);
-        }else{
+        } else {
             jsonError.put("message", status.getReasonPhrase());
         }
-        
+
         throw new WebApplicationException(Response.status(status).entity(jsonError.toString()).build());
-        
+
     }
 
 }
