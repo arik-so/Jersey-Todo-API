@@ -13,6 +13,7 @@ public class SearchlyConnector {
 
     /**
      * Get a static singleton client to communicate with Searchly
+     *
      * @return An instance of JestClient to use for communication with Searchly
      */
     public static synchronized JestClient getJestClient() {

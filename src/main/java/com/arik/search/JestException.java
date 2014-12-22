@@ -1,9 +1,10 @@
 package com.arik.search;
 
 /**
- * Created by arik-so on 12/22/14.
+ * A class for easier discrimination of error sources
+ * Unfortunately, Jest does not provide specifically typed Exception objects
  */
-public class JestException extends Exception{
+public class JestException extends Exception {
 
     /**
      * Constructs a new exception with the specified cause and a detail
@@ -19,8 +20,8 @@ public class JestException extends Exception{
      *              unknown.)
      * @since 1.4
      */
-    public JestException(Throwable cause) {
+    public JestException(final Throwable cause) {
         super(cause);
     }
-    
+
 }

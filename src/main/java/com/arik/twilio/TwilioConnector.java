@@ -22,8 +22,9 @@ public class TwilioConnector {
 
     /**
      * Send an SMS using Twilio
+     *
      * @param recipientPhoneNumber The phone number to send it to
-     * @param smsMessage The message to send
+     * @param smsMessage           The message to send
      * @throws TwilioRestException Thrown when Twilio says there is an error
      */
     public static void sendSMS(final String recipientPhoneNumber, final String smsMessage) throws TwilioRestException {
@@ -97,8 +98,6 @@ public class TwilioConnector {
 
         }
 
-        System.out.println("RESPONSE STATUS: "+responseStatusCode);
-        
         JSONObject responseDetails = (JSONObject) JSONValue.parse(response);
         String responseMessage = (String) responseDetails.get("message");
 

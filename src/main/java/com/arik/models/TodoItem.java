@@ -1,6 +1,6 @@
 package com.arik.models;
 
-import com.arik.persistency.PersistentStorage;
+import com.arik.persistence.PersistentStorage;
 import com.arik.search.JestException;
 import com.arik.search.SearchlyConnector;
 import com.mongodb.*;
@@ -40,6 +40,8 @@ public class TodoItem {
 
     /**
      * A list of phone numbers to be notified whenever a change occurs
+     * I would have preferred to use a Set, but since MongoDB returns a BasicDBList, which is incompatible with
+     * a Set, we use List
      */
     private List<String> subscribers;
 
@@ -75,7 +77,7 @@ public class TodoItem {
 
         this.subscribers = (List<String>) row.get("subscribers");
         if (this.subscribers == null) {
-            this.subscribers = new ArrayList<String>();
+            this.subscribers = new ArrayList<>();
         }
 
         this.modificationToken = (String) row.get("modification_token");
@@ -129,7 +131,7 @@ public class TodoItem {
      * @return An instance of the item
      * @throws UnknownHostException Thrown if there was an issue with MongoDB
      */
-    public static TodoItem fetchTodoItemByID(String identifier) throws UnknownHostException {
+    public static TodoItem fetchTodoItemByID(final String identifier) throws UnknownHostException {
 
         final DB database = PersistentStorage.getDatabaseConnection();
         final DBCollection table = database.getCollection(DB_TABLE);
@@ -150,10 +152,10 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Get a list of all to-do items
      *
-     * @return
-     * @throws UnknownHostException
+     * @return A List containing every to-do item
+     * @throws UnknownHostException Thrown if there is an issue with MongoDB
      */
     public static List<TodoItem> fetchAllTodoItems() throws UnknownHostException {
 
@@ -179,10 +181,10 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Save a modified object to the database
      *
-     * @throws UnknownHostException
-     * @throws JestException
+     * @throws UnknownHostException Thrown if there is an issue with MongoDB
+     * @throws JestException Thrown if there is an issue with Searchly
      */
     public void save() throws UnknownHostException, JestException {
 
@@ -207,7 +209,7 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Remove an object from the database
      *
      * @throws UnknownHostException
      * @throws JestException
@@ -236,12 +238,12 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Get a JSON object reflecting the relevant values of the object
      *
-     * @param includeModificationToken
-     * @return
+     * @param includeModificationToken Whether or not the modification token should be included in the JSON object
+     * @return The JSON object containing the values
      */
-    public JSONObject toJSONObject(boolean includeModificationToken) {
+    public JSONObject toJSONObject(final boolean includeModificationToken) {
 
         // alas, JSONObject does not support Generics and therefore produces unchecked call
         final JSONObject json = new JSONObject();
@@ -259,13 +261,13 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Internal function for the indexation on Searchly
      *
-     * @return
+     * @return A map used for the indexation on Searchly
      */
     private Map<String, String> toElasticSearchMap() {
 
-        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> map = new LinkedHashMap<>();
         map.put("title", this.getTitle());
         map.put("body", this.getBody());
 
@@ -281,7 +283,7 @@ public class TodoItem {
         return this.title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         this.title = title;
         this.row.put("title", title);
     }
@@ -290,7 +292,7 @@ public class TodoItem {
         return body;
     }
 
-    public void setBody(String body) {
+    public void setBody(final String body) {
         this.body = body;
         this.row.put("body", body);
     }
@@ -299,7 +301,7 @@ public class TodoItem {
         return isDone;
     }
 
-    public void setDone(boolean isDone) {
+    public void setDone(final boolean isDone) {
         this.isDone = isDone;
         this.row.put("is_done", isDone);
     }
@@ -313,18 +315,18 @@ public class TodoItem {
     }
 
     /**
-     * *
+     * Add a phone number to the subscribers list
      *
-     * @param phoneNumber
+     * @param phoneNumber The phone number to be added
      */
-    public void addSubscriber(String phoneNumber) {
+    public void addSubscriber(final String phoneNumber) {
 
+        // this check would not have been necessary had the container been a Set
         if (!this.subscribers.contains(phoneNumber)) {
             this.subscribers.add(phoneNumber);
             this.row.put("subscribers", this.subscribers);
         }
 
     }
-
 
 }

@@ -1,4 +1,4 @@
-package com.arik.persistency;
+package com.arik.persistence;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;

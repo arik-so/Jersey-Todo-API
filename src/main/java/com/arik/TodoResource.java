@@ -32,25 +32,6 @@ public class TodoResource {
     private static final String QUERY_PRESET_PATH = "todo-query-preset.json";
 
     /**
-     * Handles exceptions that occur pretty often due to reliance on external services such as Twilio, MongoDB, or Searchly
-     *
-     * @param e The exception to be handled.
-     */
-    private static void handleAmbiguousException(Exception e) {
-
-        e.printStackTrace();
-
-        if (e instanceof UnknownHostException) {
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with MongoDB: " + e.getMessage()).build());
-        } else if (e instanceof TwilioRestException) {
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Twilio: " + e.getMessage()).build());
-        } else if (e instanceof JestException){
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
-        }
-
-    }
-
-    /**
      * Function to be called when no further parameters are provided
      *
      * @return JSON string representing the list of all to-do items
@@ -65,7 +46,7 @@ public class TodoResource {
         try {
             allTodoItems = TodoItem.fetchAllTodoItems();
         } catch (UnknownHostException e) {
-            handleAmbiguousException(e);
+            RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
         for (TodoItem currentItem : allTodoItems) {
@@ -74,7 +55,7 @@ public class TodoResource {
 
         }
 
-        return json.toJSONString();
+        return json.toString();
 
     }
 
@@ -93,16 +74,16 @@ public class TodoResource {
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
         } catch (UnknownHostException e) {
-            handleAmbiguousException(e);
+            RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
         // the item with that ID does no exist
         if (todoItem == null) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+            RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
         }
 
         JSONObject json = todoItem.toJSONObject(false);
-        return json.toJSONString();
+        return json.toString();
 
     }
 
@@ -118,7 +99,7 @@ public class TodoResource {
     public String createTodoItem(@FormParam("title") final String title, @FormParam("body") final String body) {
 
         if (title == null || title.length() < 1) {
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The title must not be empty").build());
+            RestAPIExceptionHandler.handleException(Response.Status.BAD_REQUEST, "The title must not be empty");
         }
 
 
@@ -134,12 +115,12 @@ public class TodoResource {
 
             todoItem.save();
 
-        } catch (Exception e) {
+        } catch (JestException | UnknownHostException e) {
 
-            e.printStackTrace();
-            handleAmbiguousException(e);
+            RestAPIExceptionHandler.handleExternalServiceException(e);
 
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
+            // this will never be called because the handler throws an error
+            return null;
 
         }
 
@@ -165,12 +146,12 @@ public class TodoResource {
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
         } catch (UnknownHostException e) {
-            handleAmbiguousException(e);
+            RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
         // the item with that ID does no exist
         if (todoItem == null) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+            RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
         }
 
 
@@ -189,21 +170,17 @@ public class TodoResource {
 
         String successMessage = "You have subscribed to the changes of task \"" + todoItem.getTitle() + "\".";
 
-        // first of all, let's send a test SMS
-
         try {
 
+            // first of all, let's send a test SMS
+            // if it fails, we will be taken to the catch clause immediately and the object will no be modified
             TwilioConnector.sendSMS(normalizedPhoneNumber, successMessage);
+
             todoItem.addSubscriber(normalizedPhoneNumber);
             todoItem.save();
 
-        } catch (Exception e) {
-
-            handleAmbiguousException(e);
-
-            // if it was not handled, the issue was most probably with Searchly, which, alas, does not specify concrete error classes
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
-
+        } catch (TwilioRestException | JestException | UnknownHostException e) {
+            RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
         return successMessage;
@@ -225,84 +202,82 @@ public class TodoResource {
     @Produces("application/json")
     public String updateTodoItem(@PathParam("id") final String identifier, @FormParam("modification_token") final String modificationToken, @FormParam("title") final String title, @FormParam("body") final String body, @FormParam("done") final String isDoneString) {
 
-        TodoItem todoItem = null;
+        final TodoItem todoItem;
+
         try {
+
             todoItem = TodoItem.fetchTodoItemByID(identifier);
-        } catch (UnknownHostException e) {
-            handleAmbiguousException(e);
-        }
-        boolean notifySubscribers = false;
-        String doneStatusModifier = null;
 
-        // the item with that ID does no exist
-        if (todoItem == null) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
-        }
+            boolean notifySubscribers = false;
+            String doneStatusModifier = null;
 
-        if (!todoItem.getModificationToken().equals(modificationToken)) {
-            throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).entity("Invalid " + "modification token").build());
-        }
-
-        if (title != null) {
-
-            if (title.length() < 1) {
-                throw new BadRequestException(Response.status(Response.Status.BAD_REQUEST).entity("The title must not be empty").build());
+            // the item with that ID does no exist
+            if (todoItem == null) {
+                RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
             }
 
-            todoItem.setTitle(title);
-        }
-
-        if (body != null) {
-            todoItem.setBody(body);
-        }
-
-        if (isDoneString != null) {
-
-            notifySubscribers = true;
-
-            if (isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")) {
-
-                todoItem.setDone(true);
-                doneStatusModifier = "done.";
-
-            } else if (isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")) {
-
-                todoItem.setDone(false);
-                doneStatusModifier = "not done.";
-
-            } else {
-                notifySubscribers = false;
+            // alas, Jersey does not support HTTP Basic Authentication, which I would have used otherwise
+            if (!todoItem.getModificationToken().equals(modificationToken)) {
+                RestAPIExceptionHandler.handleException(Response.Status.UNAUTHORIZED, "Invalid modification token");
             }
 
-        }
+            if (title != null && !title.isEmpty()) {
+                todoItem.setTitle(title);
+            }
 
-        try {
+            if (body != null) {
+                todoItem.setBody(body);
+            }
+
+            if (isDoneString != null) {
+
+                notifySubscribers = true;
+
+                if (isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")) {
+
+                    todoItem.setDone(true);
+                    doneStatusModifier = "done.";
+
+                } else if (isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")) {
+
+                    todoItem.setDone(false);
+                    doneStatusModifier = "not done.";
+
+                } else {
+                    notifySubscribers = false;
+                }
+
+            }
+
             todoItem.save();
-        } catch (Exception e) {
 
-            handleAmbiguousException(e);
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
+            if (notifySubscribers) {
 
-        }
+                for (String phoneNumber : todoItem.getSubscribers()) {
 
-        if (notifySubscribers) {
+                    try {
+                        TwilioConnector.sendSMS(phoneNumber, "\"" + todoItem.getTitle() + "\" task has been marked as " + doneStatusModifier);
+                    } catch (TwilioRestException e) {
 
-            for (String phoneNumber : todoItem.getSubscribers()) {
+                        // we suppress these errors from propagation
+                        e.printStackTrace();
 
-                try {
-                    TwilioConnector.sendSMS(phoneNumber, "\"" + todoItem.getTitle() + "\" task has been marked as " + doneStatusModifier);
-                } catch (TwilioRestException e) {
-
-                    // we suppress these errors from propagation
-                    e.printStackTrace();
+                    }
 
                 }
 
             }
 
+
+        } catch (UnknownHostException | JestException e) {
+
+            RestAPIExceptionHandler.handleExternalServiceException(e);
+
+            return null;
+
         }
 
-        JSONObject json = todoItem.toJSONObject(false);
+        final JSONObject json = todoItem.toJSONObject(false);
         return json.toString();
 
     }
@@ -322,22 +297,27 @@ public class TodoResource {
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
         } catch (UnknownHostException e) {
-            handleAmbiguousException(e);
+            RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
         // the item with that ID does no exist
         if (todoItem == null) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND).entity("Invalid item ID").build());
+            RestAPIExceptionHandler.handleException(Response.Status.NOT_FOUND, "Invalid item ID");
         }
 
         if (!todoItem.getModificationToken().equals(modificationToken)) {
-            throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).entity("Invalid modification token").build());
+            RestAPIExceptionHandler.handleException(Response.Status.UNAUTHORIZED, "Invalid modification token");
         }
 
         try {
             todoItem.remove();
-        } catch (UnknownHostException | JestException e) {
-            handleAmbiguousException(e);
+        } catch (UnknownHostException e) {
+            RestAPIExceptionHandler.handleExternalServiceException(e);
+        } catch (JestException e) {
+
+            // even if the index has failed to be removed, the item no longer exists
+            e.printStackTrace();
+
         }
 
         return "Task \"" + todoItem.getTitle() + "\" has been removed.";
@@ -352,6 +332,7 @@ public class TodoResource {
      */
     @GET
     @Path("/search/{query}")
+    @Produces("application/json")
     public String searchTodoItems(@PathParam("query") final String queryString) {
 
         String elasticSearchQuery = null;
@@ -367,27 +348,31 @@ public class TodoResource {
 
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
-            throw new InternalServerErrorException();
+            RestAPIExceptionHandler.handleException(Response.Status.INTERNAL_SERVER_ERROR, null);
         }
 
-        Search search = new Search.Builder(elasticSearchQuery).addIndex(TodoItem.JEST_INDEX).addType(TodoItem.JEST_TYPE).build();
+        final Search search = new Search.Builder(elasticSearchQuery).addIndex(TodoItem.JEST_INDEX).addType(TodoItem.JEST_TYPE).build();
+        final JestClient client = SearchlyConnector.getJestClient();
 
-        JestClient client = SearchlyConnector.getJestClient();
-        SearchResult result = null;
+        final SearchResult result;
+
         try {
             result = client.execute(search);
         } catch (Exception e) {
 
-            e.printStackTrace();
-            throw new InternalServerErrorException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("There was an issue with Searchly: " + e.getMessage()).build());
+            RestAPIExceptionHandler.handleExternalServiceException(new JestException(e));
+
+            // this will never be called because the handler throws an error
+            return null;
 
         }
 
-        JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
-        JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
-        JSONArray foundItems = (JSONArray) outerHits.get("hits");
 
-        JSONArray output = new JSONArray();
+        final JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
+        final JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
+        final JSONArray foundItems = (JSONArray) outerHits.get("hits");
+
+        final JSONArray output = new JSONArray();
 
         for (Object currentFindObject : foundItems) {
 
@@ -398,7 +383,7 @@ public class TodoResource {
             try {
                 currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
             } catch (UnknownHostException e) {
-                handleAmbiguousException(e);
+                RestAPIExceptionHandler.handleExternalServiceException(e);
             }
 
             // occasionally, an item will have been removed from MongoDB but an index removal error could have occurred thereafter
@@ -408,7 +393,7 @@ public class TodoResource {
 
         }
 
-        return output.toJSONString();
+        return output.toString();
 
     }
 
