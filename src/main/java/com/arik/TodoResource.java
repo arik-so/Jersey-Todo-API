@@ -170,17 +170,22 @@ public class TodoResource {
 
         String successMessage = "You have subscribed to the changes of task \"" + todoItem.getTitle() + "\".";
 
-        try {
+        // we do not need to check the phone number and send SMS if the item has already been subscribed to
+        if(!todoItem.getSubscribers().contains(normalizedPhoneNumber)) {
 
-            // first of all, let's send a test SMS
-            // if it fails, we will be taken to the catch clause immediately and the object will no be modified
-            TwilioConnector.sendSMS(normalizedPhoneNumber, successMessage);
+            try {
 
-            todoItem.addSubscriber(normalizedPhoneNumber);
-            todoItem.save();
+                // first of all, let's send a test SMS
+                // if it fails, we will be taken to the catch clause immediately and the object will no be modified
+                TwilioConnector.sendSMS(normalizedPhoneNumber, successMessage);
 
-        } catch (TwilioRestException | JestException | UnknownHostException e) {
-            RestAPIExceptionHandler.handleExternalServiceException(e);
+                todoItem.addSubscriber(normalizedPhoneNumber);
+                todoItem.save();
+
+            } catch (TwilioRestException | JestException | UnknownHostException e) {
+                RestAPIExceptionHandler.handleExternalServiceException(e);
+            }
+
         }
 
         JSONObject successJSON = new JSONObject();
