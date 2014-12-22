@@ -1,7 +1,5 @@
 package com.arik.heroku;
 
-import com.arik.twilio.TwilioConnector;
-import com.twilio.sdk.TwilioRestException;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -19,7 +17,7 @@ public class Main {
             webPort = "8080";
         }
 
-        
+
         final Server server = new Server(Integer.valueOf(webPort));
         final WebAppContext root = new WebAppContext();
 
