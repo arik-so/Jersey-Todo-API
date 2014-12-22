@@ -1,5 +1,21 @@
 # Jersey Todo API
 
+## Installation
+
+- Make sure you have Maven installed and configured to use JDK 1.7 or bigger.
+- Create a .env file in the project root directory with the Twilio, MongoDB, and Searchly configuration variables
+- Have the Heroku command line tools installed
+
+Compile the project:
+```shell
+mvn clean install
+```
+
+Run it locally:
+```shell
+foreman start web
+```
+
 ## Usage
 
 ### Create a new todo item
