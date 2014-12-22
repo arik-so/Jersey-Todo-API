@@ -1,7 +1,7 @@
 package com.arik.models;
 
 /**
- * Created by arik-so on 12/22/14.
+ * Class for representing various done states
  */
 public class TodoItemState {
 
@@ -35,10 +35,10 @@ public class TodoItemState {
         }
 
         /**
-         * *
+         * Parse a human-created boolean descriptor string into a proper state
          *
-         * @param isDoneString
-         * @return
+         * @param isDoneString The string that is to be parsed and converted into a done state
+         * @return The resulting done state
          */
         public static DoneState fromString(final String isDoneString) {
 

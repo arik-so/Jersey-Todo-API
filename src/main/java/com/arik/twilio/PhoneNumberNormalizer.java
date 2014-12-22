@@ -1,7 +1,7 @@
 package com.arik.twilio;
 
 /**
- * Created by arik-so on 12/22/14.
+ * Class for normalizing human-generated into a common, consistent format
  */
 public class PhoneNumberNormalizer {
 

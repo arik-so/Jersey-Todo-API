@@ -238,6 +238,7 @@ public class TodoResource {
 
             RestAPIExceptionHandler.handleExternalServiceException(e);
 
+            // this will never be called because the handler throws an error
             return null;
 
         }
@@ -282,7 +283,7 @@ public class TodoResource {
         } catch (JestException e) {
 
             // even if the index has failed to be removed, the item no longer exists
-            
+
             // stderr directs the output to Heroku's logger
             e.printStackTrace();
 
@@ -312,7 +313,7 @@ public class TodoResource {
             final URL queryPresetURL = SearchlyConnector.class.getClassLoader().getResource(QUERY_PRESET_PATH);
 
             final String queryPreset = new String(Files.readAllBytes(Paths.get(queryPresetURL.toURI())));
-            
+
             // we need to sanitize the input to be a properly formatted JSON string in order to prevent search injection
             final String sanitizedQueryString = JSONObject.escape(queryString);
 
@@ -344,7 +345,7 @@ public class TodoResource {
 
         // if there was an error message, i. e. a parse error, sent from Searchly, it's none of the user's business
         // we just say nothing was found
-        if(errorMessage == null) {
+        if (errorMessage == null) {
 
             final JSONObject foundItemDetails = (JSONObject) JSONValue.parse(result.getJsonString());
             final JSONObject outerHits = (JSONObject) foundItemDetails.get("hits");
@@ -377,8 +378,10 @@ public class TodoResource {
     }
 
     /**
-     * @param todoItem
-     * @param doneState
+     * Notify subscribers about done status changes
+     *
+     * @param todoItem  The to-do item whose subscribers are to be notified
+     * @param doneState The done state indicating whether or not they should be notified at all
      */
     private void notifySubscribers(final TodoItem todoItem, final TodoItemState.DoneState doneState) {
 

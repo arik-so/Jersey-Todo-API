@@ -58,12 +58,9 @@ public class TodoItem {
     private DBObject row;
 
     /**
-     * In order to avoid confusion, we do not allow package-external calls to the empty constructor such that objects
+     * In order to avoid confusion, we do not allow external calls to the empty constructor such that objects
      * are always created using the create()-method an automatically added to the DB
      */
-    private TodoItem() {
-    }
-
     private TodoItem(final DBObject row) {
 
         final ObjectId identifier = (ObjectId) row.get("_id");
@@ -211,8 +208,8 @@ public class TodoItem {
     /**
      * Remove an object from the database
      *
-     * @throws UnknownHostException
-     * @throws JestException
+     * @throws UnknownHostException Thrown if there is an issue with MongoDB
+     * @throws JestException Thrown if there is an issue with Searchly
      */
     public void remove() throws UnknownHostException, JestException {
 
