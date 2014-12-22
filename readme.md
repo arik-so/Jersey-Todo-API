@@ -16,6 +16,8 @@ Run it locally:
 foreman start web
 ```
 
+The API should now be responding to HTTP requests to `http://localhost:5000`
+
 ## Usage
 
 ### Create a new todo item
