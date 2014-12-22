@@ -147,3 +147,4 @@ is provided as a query parameter rather than within the request body.
 curl -X DELETE https://jersey-todo-api.herokuapp.com/5496de5fd4c6d2992e916299?modification_token=6cnvgcejcvh60nlebvru6vc9ev
 ```
 
+A successful item removal produces no content and an HTTP 204 No Content status code.
