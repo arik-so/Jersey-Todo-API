@@ -3,8 +3,11 @@
 ## Installation
 
 - Make sure you have Maven installed and configured to use JDK 1.7 or bigger.
-- Create an environment configuration file (`.env`) in the project root directory with the Twilio, MongoDB, and Searchly configuration variables
-- Have the Heroku command line tools installed
+- Create an environment configuration file (`.env`) in the project root directory with the Twilio, MongoDB, and Searchly configuration variables. The following configuration properties have to be set:
+	- `TWILIO_AUTH_TOKEN`
+	- `MONGOSOUP_URL`
+	- `SEARCHBOX_URL`
+- Have the [Heroku command line tools](https://toolbelt.heroku.com/) installed
 
 Compile the project:
 ```shell
