@@ -28,7 +28,7 @@ public class PersistentStorage {
         MongoClient mongoClient;
         String database;
 
-        final String mongoSoupHost = System.getenv("MONGOSOUP_URL");
+        final String mongoSoupHost = System.getenv("MONGOLAB_URI");
 
         // if the environment tells us the mongosoup DB url, we use that one. Otherwise, we revert/default to local
         if (mongoSoupHost != null && mongoSoupHost.length() > 0) {
