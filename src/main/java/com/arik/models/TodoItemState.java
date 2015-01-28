@@ -42,6 +42,10 @@ public class TodoItemState {
          */
         public static DoneState fromString(final String isDoneString) {
 
+            if(isDoneString == null){
+                return DoneState.UNCHANGED;
+            }
+
             if (isDoneString.equalsIgnoreCase("true") || isDoneString.equalsIgnoreCase("1")) {
                 return DoneState.DONE;
             } else if (isDoneString.equalsIgnoreCase("false") || isDoneString.equalsIgnoreCase("0")) {
