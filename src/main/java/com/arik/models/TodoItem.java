@@ -156,7 +156,7 @@ public class TodoItem {
      * @return A List containing every to-do item
      * @throws UnknownHostException Thrown if there is an issue with MongoDB
      */
-    public static List<TodoItem> fetchAllTodoItems() throws UnknownHostException {
+    public static List<TodoItem> fetchAllTodoItems() throws UnknownHostException, MongoException {
 
         final DB database = PersistentStorage.getDatabaseConnection();
         final DBCollection table = database.getCollection(DB_TABLE);
@@ -172,6 +172,10 @@ public class TodoItem {
                 currentIdentifier = cursor.next().get("_id").toString();
                 allItems.add(fetchTodoItemByID(currentIdentifier));
             }
+
+        } catch (MongoTimeoutException e) {
+
+            throw e;
 
         }
 

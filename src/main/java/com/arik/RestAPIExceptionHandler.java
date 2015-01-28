@@ -1,6 +1,7 @@
 package com.arik;
 
 import com.arik.search.JestException;
+import com.mongodb.MongoException;
 import com.twilio.sdk.TwilioRestException;
 import org.json.simple.JSONObject;
 
@@ -25,7 +26,7 @@ public class RestAPIExceptionHandler {
 
         String errorMessage;
 
-        if (externalServiceException instanceof UnknownHostException) {
+        if (externalServiceException instanceof UnknownHostException || externalServiceException instanceof MongoException) {
             errorMessage = "There was an issue with MongoDB: ";
         } else if (externalServiceException instanceof TwilioRestException) {
             errorMessage = "There was an issue with Twilio: ";

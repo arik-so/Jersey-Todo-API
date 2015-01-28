@@ -6,6 +6,8 @@ import com.arik.search.JestException;
 import com.arik.search.SearchlyConnector;
 import com.arik.twilio.PhoneNumberNormalizer;
 import com.arik.twilio.TwilioConnector;
+import com.mongodb.Mongo;
+import com.mongodb.MongoException;
 import com.twilio.sdk.TwilioRestException;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
@@ -47,7 +49,7 @@ public class TodoResource {
 
         try {
             allTodoItems = TodoItem.fetchAllTodoItems();
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | MongoException e) {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
@@ -75,7 +77,7 @@ public class TodoResource {
         TodoItem todoItem = null;
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | MongoException e) {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
@@ -115,7 +117,7 @@ public class TodoResource {
 
             todoItem.save();
 
-        } catch (JestException | UnknownHostException e) {
+        } catch (JestException | UnknownHostException | MongoException e) {
 
             RestAPIExceptionHandler.handleExternalServiceException(e);
 
@@ -144,7 +146,7 @@ public class TodoResource {
         TodoItem todoItem = null;
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | MongoException e) {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
@@ -169,7 +171,7 @@ public class TodoResource {
                 todoItem.addSubscriber(normalizedPhoneNumber);
                 todoItem.save();
 
-            } catch (TwilioRestException | JestException | UnknownHostException e) {
+            } catch (TwilioRestException | JestException | UnknownHostException | MongoException e) {
                 RestAPIExceptionHandler.handleExternalServiceException(e);
             }
 
@@ -234,7 +236,7 @@ public class TodoResource {
             // after persistence is guaranteed, we notify the Twilio subscribers about the change
             notifySubscribers(todoItem, doneState);
 
-        } catch (UnknownHostException | JestException e) {
+        } catch (UnknownHostException | JestException | MongoException e) {
 
             RestAPIExceptionHandler.handleExternalServiceException(e);
 
@@ -263,7 +265,7 @@ public class TodoResource {
         TodoItem todoItem = null;
         try {
             todoItem = TodoItem.fetchTodoItemByID(identifier);
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | MongoException e) {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         }
 
@@ -278,7 +280,7 @@ public class TodoResource {
 
         try {
             todoItem.remove();
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException | MongoException e) {
             RestAPIExceptionHandler.handleExternalServiceException(e);
         } catch (JestException e) {
 
@@ -360,7 +362,7 @@ public class TodoResource {
                 TodoItem currentItem = null;
                 try {
                     currentItem = TodoItem.fetchTodoItemByID(currentIdentifier);
-                } catch (UnknownHostException e) {
+                } catch (UnknownHostException | MongoException e) {
                     RestAPIExceptionHandler.handleExternalServiceException(e);
                 }
 
